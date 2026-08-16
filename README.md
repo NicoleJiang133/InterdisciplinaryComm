@@ -30,26 +30,28 @@ The counter-risk is automation bias: a scientist treating "it did not flag this"
 
 ## Architecture
 
-`src/transfer_audit/cli.py` is the entry point. `run --claim-file` executes ingest → retrieve → align → ledger → report into a run directory; `run --replay` re-renders both reports from a saved run and does not call Paperclip or Anthropic. `src/transfer_audit/pc.py` is the Paperclip transport: every Paperclip call goes through `pc()`, which runs `subprocess.run(["paperclip", *args])`.
+### The pipeline
 
 | Stage | Module | Tool | What the tool does here |
 |---|---|---|---|
-| ingest | `src/transfer_audit/ingest.py` | Anthropic API (Claude) | fills the seven slots from free text. Used here and nowhere else, because Paperclip's `map` runs over papers, not arbitrary text |
-| retrieve | `src/transfer_audit/retrieve.py` | Paperclip (GXL) | two slot-derived `paperclip search` legs (`-s arxiv` and `-s pmc,biorxiv`) |
-| align | `src/transfer_audit/align.py` | Paperclip (GXL) | `paperclip map --output-schema` extracts seven structural slots per paper |
-| ledger | `src/transfer_audit/ledger.py` | Paperclip (GXL) | `map` again, schema-constrained, producing `LedgerEntry` objects with `source_doc_id` and `evidence_lines` |
-| report | `src/transfer_audit/report.py` | jinja2 | HTML to read; Markdown as the handoff format for a Sundial human-agent editor |
-| front-end | `src/transfer_audit/server.py`, `web/` | FastAPI | localhost only; runs the five stages live, falls back to a saved run and labels it |
+| ingest | `ingest.py` | Anthropic API (Claude) | fills the seven slots from free text. Used here and nowhere else, because Paperclip's `map` runs over papers, not arbitrary text |
+| retrieve | `retrieve.py` | Paperclip (GXL) | two slot-derived `paperclip search` legs across arXiv, PMC, bioRxiv (`-s arxiv` and `-s pmc,biorxiv`) |
+| align | `align.py` | Paperclip (GXL) | `paperclip map --output-schema` extracts seven structural slots per paper |
+| ledger | `ledger.py` | Paperclip (GXL) | `map` again, schema-constrained, producing `LedgerEntry` objects with doc id (`source_doc_id`) and line range (`evidence_lines`) |
+| report | `report.py` | jinja2 | HTML to read; Markdown as the Sundial handoff |
+| front-end | `server.py`, `web/` | FastAPI | localhost; runs the five stages live, falls back to a saved run and labels it as saved |
 
-**The data contract.** `TransferContext` and `LedgerEntry` are pydantic v2 models in `src/transfer_audit/models.py` with `extra="forbid"`. `data/schema/ledger_entry.json` is generated from `LedgerEntry.model_json_schema()` and its contents are passed inline to `paperclip map --output-schema` — never a path. Status `UNKNOWN` is valid only when `what_would_resolve_it` is at least 20 characters.
+Paperclip auth is OAuth via `paperclip login`, not an API key. Nothing in the codebase handles a Paperclip credential. (`paperclip install` installs the agent skill; it does not authenticate.)
 
-Paperclip auth is OAuth via `paperclip login` (browser sign-in), not an API key. Nothing in the codebase handles a Paperclip credential. (`paperclip install` installs the agent skill; it does not authenticate.)
+### Where the work goes next
 
-TransferBench is specified as a BenchFlow-compatible environment in [docs/08-transferbench.md](docs/08-transferbench.md). It is not ported to their runtime.
+**Sundial — the review surface.** Sundial's shipped instrument is an editor for Markdown and LaTeX ([sundial.md/editor](https://www.sundial.md/editor)). Sun, a local-first system of record, is unreleased — the homepage describes it and offers no product. Neither generates a report, and CrossWork does not ask them to. CrossWork emits `report.md` in the handoff format: source assumption and target restatement sit adjacent as editable prose, because a scientist correcting a translation is the highest-value input this system can capture. The local front-end already persists those corrections to `corrections.json`. The Sundial editor is where that correction happens with attribution and reversibility. No integration with Sun; it is unreleased.
 
-The Markdown report is the handoff format for a Sundial human-agent editor. There is no integration with their unreleased system of record.
+**BenchFlow — the evaluation environment.** This is a roadmap position. The spec exists. The port does not.
 
-**What is not built.** `eval/score.py`, the round-trip fidelity check, target-document input, and the `answer` loop are not in this repository. See [docs/06-roadmap.md](docs/06-roadmap.md).
+TransferBench ([docs/08-transferbench.md](docs/08-transferbench.md)) is specified as a BenchFlow-compatible agent environment — task, verifier, UNKNOWN-spam guard, and a baseline scored 5 of 8. A port would let any agent be scored against that environment, not only this pipeline; capture the full trajectory, so a failure can be attributed to a specific stage; and re-run every prompt or schema change for comparison rather than argument.
+
+What has to happen first: the suite has to grow from 8 cases to several dozen. Seven of the eight leakage types rest on a single paper each, so a score moving from 5 to 6 cannot be distinguished from one case flipping by chance. Iterating against a suite that small would be fitting to noise — which is the failure mode of the 329 papers this project is built on. Only 8 of the 20 review rows are convertible and the ceiling is 10, so this needs a new source of cases. CrossWork does not improve itself through BenchFlow today.
 
 ## Status
 
