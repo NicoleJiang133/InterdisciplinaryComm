@@ -38,6 +38,7 @@ from transfer_audit.models import (
 from transfer_audit.pc import pc
 from transfer_audit.retrieve import Retrieval, SourceDoc
 
+# Chosen by inspection on one fixture; not calibrated. See docs/03-architecture.md.
 MIN_MAPPED = 3
 
 _EXTRACT_QUERY = """\

@@ -2,6 +2,8 @@
 
 Takes a scientific claim borrowed from another discipline and emits an assumption ledger: the source result's validity conditions, restated in the target system's language.
 
+This is a prototype, built in roughly 24 hours, exercised end to end on a single fixture claim.
+
 ## The problem
 
 A competent scientist understands a borrowed result to about 70%. The missing 30% is invisible, and they act on the approximation. The source condition "the test set must be drawn from the distribution of scientific interest" is stored as "use a held-out test set". Every one of the 329 papers surveyed in Kapoor & Narayanan ([arXiv:2207.07048](https://arxiv.org/abs/2207.07048)) is compliant with the second sentence and in violation of the first.
@@ -14,7 +16,8 @@ It generates questions, not verdicts. The source literature already showed these
 
 | Stage | State |
 |---|---|
-| Ingest, retrieve, align, ledger | Built. Alignment is a gate (mapped slots ≥ 3). The round-trip fidelity check on `target_restatement` is not built. |
+| Ingest, retrieve, align, ledger | Built. Alignment is a gate on mapped slots; the threshold was chosen by inspection on this fixture, not calibrated ([architecture](docs/03-architecture.md)). |
+| Round-trip fidelity check | Not built. That is a separate stage from the alignment gate. |
 | Report HTML, CLI, scorer | Not built. The recall number against `data/ground_truth.csv` does not exist yet. |
 | Target-document input | Not built. A two-sentence claim produces 9/9 UNKNOWN, which is the correct answer given that input. |
 
@@ -32,12 +35,16 @@ Agent-facing build spec: [BUILD.md](BUILD.md).
 
 ## Quickstart
 
-```
-python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-cp .env.example .env          # set ANTHROPIC_API_KEY
+Requires Python 3.12 or later. `python3 --version` must report 3.12+. If it does not, call the 3.12 binary directly (on this machine: `/opt/homebrew/bin/python3.12`).
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -e ".[dev]"
+cp .env.example .env
+# set ANTHROPIC_API_KEY in .env
 # paperclip must already be installed and authenticated on this machine
-pytest -m "not integration"
-python -m transfer_audit.ingest tests/fixtures/target_claim.txt
+.venv/bin/pytest -m "not integration"
+.venv/bin/python -m transfer_audit.ingest tests/fixtures/target_claim.txt
 ```
 
 There is no `transfer-audit` CLI yet. Stages are invoked as modules. Live Paperclip calls need a writable `$HOME/.paperclip`.

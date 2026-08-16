@@ -50,6 +50,8 @@ Each retrieved paper is mapped for seven slots (system, state_variable, perturba
 
 Gate: fewer than 3 mapped slots → held out of the ledger. At least 3 mapped but unmapped ≥ mapped → admitted and flagged weak. Held-out papers stay in `alignment.json`.
 
+The threshold of 3 was chosen by inspection on a single fixture; not calibrated. It is the smallest integer that held out the two metaphor papers (mapped=0) while admitting the prediction papers (mapped=3) on that one run. It has not been tested against a labelled admit/hold-out set, and it should be read as a working cut, not a design constant.
+
 On the fixture, with the denylist empty, the two metaphor papers (`arx_2204.07005`, `arx_2509.07237`) scored mapped=0 and were held out. That is one run, one fixture.
 
 The round-trip fidelity check (take `target_restatement` alone, recover the source condition, mark `fidelity: high | degraded`) is **not built**.

@@ -252,7 +252,8 @@ each slot against the target context. Comparison is deterministic:
 
 Gate: a paper with fewer than 3 mapped slots does not enter T4. A paper that
 clears 3 mapped slots but has at least as many unmapped as mapped enters T4
-flagged as weak. Denied-by-alignment papers stay in alignment.json so the
+flagged as weak. The cut of 3 was chosen by inspection on a single fixture;
+not calibrated. Denied-by-alignment papers stay in alignment.json so the
 scientist can see why they were held out. This replaces hand-pruning
 (DEFAULT_DENY is an escape hatch, not the mechanism).
 Accept: on the fixture, the two metaphor papers (arx_2204.07005,
