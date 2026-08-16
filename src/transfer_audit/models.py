@@ -109,7 +109,13 @@ class SlotAlignment(BaseModel):
 
 
 class PaperAlignment(BaseModel):
-    """How much of a source paper's structure has a counterpart in the target."""
+    """One paper's slots against the target.
+
+    extraction_quality is how many slots we got out of the paper (mapped + unmapped).
+    It gates: a paper with nothing extracted cannot be audited. break_richness is how
+    many of those slots have no counterpart in the target. It does not gate — under
+    the thesis, higher is more useful.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -118,13 +124,25 @@ class PaperAlignment(BaseModel):
     slots: list[SlotAlignment]
     mapped: int
     unmapped: int
-    score: float
+    extraction_quality: int
+    break_richness: int
     admitted: bool
-    weak: bool = False
 
     @property
     def break_points(self) -> list[SlotAlignment]:
         return [slot for slot in self.slots if slot.judgement == "unmapped"]
+
+
+class BreakPoint(BaseModel):
+    """One slot the source literature specifies and the target leaves silent."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    slot: SlotName
+    papers_stating: int
+    extracted: int
+    target_states_it: bool
+    paper_values: list[str] = []
 
 
 class AlignmentReport(BaseModel):
@@ -135,11 +153,12 @@ class AlignmentReport(BaseModel):
     papers: list[PaperAlignment]
     admitted_ids: list[str]
     held_out_ids: list[str]
-    threshold_mapped: int
+    break_points: list[BreakPoint]
+    min_extraction_quality: int
 
     @property
-    def weak_ids(self) -> list[str]:
-        return [paper.doc_id for paper in self.papers if paper.admitted and paper.weak]
+    def extracted_ids(self) -> list[str]:
+        return self.admitted_ids
 
 
 def emit_schema(path: Path = SCHEMA_PATH) -> Path:

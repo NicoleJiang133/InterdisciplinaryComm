@@ -245,20 +245,24 @@ failure_mode, isolation_unit) from the paper itself via map, then compare
 each slot against the target context. Comparison is deterministic:
 
   mapped    paper instantiates the slot AND the target has a counterpart
-            -> the condition can be stated precisely in the target's language
   unmapped  paper instantiates the slot AND the target has no counterpart
-            -> report to the scientist: this is where the transfer breaks
-  absent    the paper does not instantiate the slot; ignored in the score
+  absent    the paper does not instantiate the slot
 
-Gate: a paper with fewer than 3 mapped slots does not enter T4. A paper that
-clears 3 mapped slots but has at least as many unmapped as mapped enters T4
-flagged as weak. The cut of 3 was chosen by inspection on a single fixture;
-not calibrated. Denied-by-alignment papers stay in alignment.json so the
-scientist can see why they were held out. This replaces hand-pruning
-(DEFAULT_DENY is an escape hatch, not the mechanism).
-Accept: on the fixture, the two metaphor papers (arx_2204.07005,
-arx_2509.07237) score below the gate without being on the denylist; at least
-one ICU paper and one neuroimaging prediction paper clear it.
+Two scores:
+  extraction_quality  mapped + unmapped. Gates. Zero means nothing was
+                      extracted and the paper does not enter T4.
+  break_richness      unmapped count. Does not gate. Higher is more useful.
+
+Unmapped slots are aggregated across extracted papers into a break-point
+summary, ranked by how often the source literature states a slot the target
+leaves silent. That summary is first-class run output, printed before the
+ledger. Per-paper repetition of the same unmapped slot is not a finding.
+
+The old mapped>=3 cut is retired: on this fixture it was structurally
+untestable (see docs/03-architecture.md).
+Accept: on the fixture, an all-null extraction is held out; the break-point
+summary ranks isolation_unit first; at least one ICU paper and one
+neuroimaging prediction paper are extracted.
 
 T4 ledger.py — build_ledger(ctx, doc_ids) -> list[LedgerEntry].
 paperclip map --from <s_id> --output-schema data/schema/ledger_entry.json

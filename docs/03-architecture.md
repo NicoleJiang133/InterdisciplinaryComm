@@ -45,14 +45,19 @@ Built. This is the missing step that retrieve-then-ledger did not have.
 Each retrieved paper is mapped for seven slots (system, state_variable, perturbation, readout, constraints, failure_mode, isolation_unit). Comparison against the target context is deterministic:
 
 - **mapped** — paper instantiates the slot and the target has a counterpart. A precise restatement is possible.
-- **unmapped** — paper instantiates the slot and the target is silent. Reported as a break point. This is where the 70% reading drops the 30%.
-- **absent** — the paper does not instantiate the slot. Ignored in the score.
+- **unmapped** — paper instantiates the slot and the target is silent. A break point.
+- **absent** — the paper does not instantiate the slot.
 
-Gate: fewer than 3 mapped slots → held out of the ledger. At least 3 mapped but unmapped ≥ mapped → admitted and flagged weak. Held-out papers stay in `alignment.json`.
+Two scores, not one:
 
-The threshold of 3 was chosen by inspection on a single fixture; not calibrated. It is the smallest integer that held out the two metaphor papers (mapped=0) while admitting the prediction papers (mapped=3) on that one run. It has not been tested against a labelled admit/hold-out set, and it should be read as a working cut, not a design constant.
+- **extraction_quality** — mapped + unmapped: did we get structure out of this paper at all. This gates. A paper with extraction_quality 0 (every slot absent) cannot be audited and does not enter the ledger.
+- **break_richness** — unmapped count. This does not gate. Higher is more useful: more slots where the source states something the target leaves silent.
 
-On the fixture, with the denylist empty, the two metaphor papers (`arx_2204.07005`, `arx_2509.07237`) scored mapped=0 and were held out. That is one run, one fixture.
+Unmapped slots are aggregated across extracted papers, not listed per paper, and printed before the ledger. Ranked by how universally the source literature specifies a slot the target does not. On the fixture that top row is `isolation_unit`.
+
+The previous cut of mapped ≥ 3 was chosen by inspection on a single fixture and is retired. On that fixture, mapped counts were only 0 or 3: the target instantiates exactly three slots, so any prediction paper filling system + state_variable + readout scores 3 and an extraction failure scores 0. Values of 1 and 2 would require a paper instantiating a proper subset of those three. The threshold was not undertested by sample size — it is structurally untestable against this fixture. The gate that remains is extraction_quality ≥ 1.
+
+On the fixture, with the denylist empty, the normative-modelling guide (`arx_2509.07237`) extracted nothing and was held out. That is one run, one fixture.
 
 The round-trip fidelity check (take `target_restatement` alone, recover the source condition, mark `fidelity: high | degraded`) is **not built**.
 

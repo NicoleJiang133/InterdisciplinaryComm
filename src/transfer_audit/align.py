@@ -31,6 +31,7 @@ from transfer_audit.ledger import (
 from transfer_audit.models import (
     ALIGNMENT_SLOTS,
     AlignmentReport,
+    BreakPoint,
     PaperAlignment,
     SlotAlignment,
     TransferContext,
@@ -38,8 +39,17 @@ from transfer_audit.models import (
 from transfer_audit.pc import pc
 from transfer_audit.retrieve import Retrieval, SourceDoc
 
-# Chosen by inspection on one fixture; not calibrated. See docs/03-architecture.md.
-MIN_MAPPED = 3
+# Gate on extraction, not on analogy. A paper with extraction_quality == 0 had
+# nothing to compare. See docs/03-architecture.md: the old mapped>=3 cut was
+# structurally untestable on this fixture.
+MIN_EXTRACTION_QUALITY = 1
+
+# Tie-break when two slots are equally universal: isolation_unit is the 70% gap.
+_BREAK_PRIORITY = {
+    "isolation_unit": 0,
+    "constraints": 1,
+    "failure_mode": 2,
+}
 
 _EXTRACT_QUERY = """\
 Read this paper and fill the seven structural slots of ITS OWN study. \
@@ -133,20 +143,67 @@ def score_paper(doc: SourceDoc, paper: PaperSlots, ctx: TransferContext) -> Pape
     ]
     mapped = sum(1 for slot in slots if slot.judgement == "mapped")
     unmapped = sum(1 for slot in slots if slot.judgement == "unmapped")
-    denom = mapped + unmapped
-    score = mapped / denom if denom else 0.0
-    admitted = mapped >= MIN_MAPPED
-    weak = admitted and unmapped >= mapped
+    extraction_quality = mapped + unmapped
     return PaperAlignment(
         doc_id=doc.doc_id,
         title=doc.title,
         slots=slots,
         mapped=mapped,
         unmapped=unmapped,
-        score=round(score, 3),
-        admitted=admitted,
-        weak=weak,
+        extraction_quality=extraction_quality,
+        break_richness=unmapped,
+        admitted=extraction_quality >= MIN_EXTRACTION_QUALITY,
     )
+
+
+def summarise_break_points(papers: list[PaperAlignment], ctx: TransferContext) -> list[BreakPoint]:
+    """Aggregate unmapped slots across extracted papers. Rank by how often the
+    source literature states something the target leaves silent."""
+    extracted = [paper for paper in papers if paper.admitted]
+    if not extracted:
+        return []
+    target = target_slots(ctx)
+    rows: list[BreakPoint] = []
+    n = len(extracted)
+    for name in ALIGNMENT_SLOTS:
+        values = []
+        for paper in extracted:
+            slot = next(s for s in paper.slots if s.slot == name)
+            if slot.judgement == "unmapped" and slot.paper_value:
+                values.append(slot.paper_value)
+        if not values:
+            continue
+        rows.append(
+            BreakPoint(
+                slot=name,
+                papers_stating=len(values),
+                extracted=n,
+                target_states_it=_filled(target[name]),
+                paper_values=values,
+            )
+        )
+    rows.sort(
+        key=lambda row: (
+            -row.papers_stating,
+            _BREAK_PRIORITY.get(row.slot, 99),
+        )
+    )
+    return rows
+
+
+def format_break_points(rows: list[BreakPoint]) -> str:
+    if not rows:
+        return "break points: none — every instantiated source slot has a target counterpart"
+    lines = [
+        "break points (source states it, target does not):",
+        f"  {'slot':<16} {'papers stating it / extracted':<32} target states it",
+    ]
+    for row in rows:
+        target = "YES" if row.target_states_it else "NO"
+        lines.append(
+            f"  {row.slot:<16} {f'{row.papers_stating}/{row.extracted}':<32} {target}"
+        )
+    return "\n".join(lines)
 
 
 def _extract_schema() -> str:
@@ -215,26 +272,26 @@ def score_alignment(
 
     admitted = [paper.doc_id for paper in papers if paper.admitted]
     held = [paper.doc_id for paper in papers if not paper.admitted]
+    breaks = summarise_break_points(papers, ctx)
     print(
-        f"alignment: {len(admitted)} admitted, {len(held)} held out "
-        f"(gate: {MIN_MAPPED} mapped slots)",
+        f"alignment: {len(admitted)} extracted, {len(held)} extraction failure "
+        f"(gate: extraction_quality >= {MIN_EXTRACTION_QUALITY})",
         file=sys.stderr,
     )
+    print(format_break_points(breaks), file=sys.stderr)
     for paper in papers:
         flag = "ADMIT" if paper.admitted else "HOLD"
-        if paper.weak:
-            flag = "WEAK"
-        breaks = ",".join(slot.slot for slot in paper.break_points) or "-"
         print(
-            f"  {flag:5} {paper.doc_id:18} mapped={paper.mapped} "
-            f"unmapped={paper.unmapped} breaks={breaks}",
+            f"  {flag:5} {paper.doc_id:18} extraction={paper.extraction_quality} "
+            f"breaks={paper.break_richness}",
             file=sys.stderr,
         )
     return AlignmentReport(
         papers=papers,
         admitted_ids=admitted,
         held_out_ids=held,
-        threshold_mapped=MIN_MAPPED,
+        break_points=breaks,
+        min_extraction_quality=MIN_EXTRACTION_QUALITY,
     )
 
 

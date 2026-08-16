@@ -16,7 +16,7 @@ It generates questions, not verdicts. The source literature already showed these
 
 | Stage | State |
 |---|---|
-| Ingest, retrieve, align, ledger | Built. Alignment is a gate on mapped slots; the threshold was chosen by inspection on this fixture, not calibrated ([architecture](docs/03-architecture.md)). |
+| Ingest, retrieve, align, ledger | Built. The alignment gate removes extraction failures (no slots recovered from the paper), not weak analogies. Unmapped slots are aggregated as break points ([architecture](docs/03-architecture.md)). |
 | Round-trip fidelity check | Not built. That is a separate stage from the alignment gate. |
 | Report HTML, CLI, scorer | Not built. The recall number against `data/ground_truth.csv` does not exist yet. |
 | Target-document input | Not built. A two-sentence claim produces 9/9 UNKNOWN, which is the correct answer given that input. |
