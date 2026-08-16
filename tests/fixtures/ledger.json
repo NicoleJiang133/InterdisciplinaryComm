@@ -1,0 +1,101 @@
+[
+  {
+    "axis": "A_isolation",
+    "subtype": "A4",
+    "status": "UNKNOWN",
+    "source_assumption": "The paper isolated 25% of participants from each cohort as an independent test set prior to analysis and stratified the split based on clinical and demographic variables to prevent data leakage.",
+    "target_restatement": "Are ICU patient data splits partitioned by patient ID, such that continuous monitoring windows from the same ICU stay never appear in both the training and testing sets?",
+    "rationale": "The paper relies on strict data isolation by splitting participants prior to any analysis and stratifying the split to form independent train, validation, and test sets (L39). For the target ICU sepsis prediction task, an analogous condition demands that data splits are performed at the patient admission level so that no patient contributes time-series windows to both training and testing sets. Since the target description does not specify how patient streams are partitioned, the status is unknown.",
+    "evidence_lines": "L39",
+    "what_would_resolve_it": "Are ICU patient data splits partitioned by patient ID, such that continuous monitoring windows from the same ICU stay never appear in both the training and testing sets?",
+    "source_doc_id": "arx_2408.02496"
+  },
+  {
+    "axis": "A_isolation",
+    "subtype": "A4",
+    "status": "UNKNOWN",
+    "source_assumption": "The source paper assumes that models evaluated on fMRI data must enforce strict subject-level splitting (Segmentation 2) where all 2D slices from a given subject are confined exclusively to a single partition (train, validation, or test) to prevent severe information leakage from 40 subjects across thousands of extracted slices.",
+    "target_restatement": "Are the train, validation, and test partitions formed at the patient level, ensuring that multiple temporal windows or streams originating from the same ICU patient admission never cross over between training and testing sets?",
+    "rationale": "The source paper relies fundamentally on enforcing a strict subject-level split (Segmentation 2) rather than an image-level split (Segmentation 1) so that multiple samples derived from the same subject do not cross the boundary between training and test sets, avoiding information leakage. For the target ICU sepsis prediction task using continuous vital-sign monitoring streams, the analogous condition demands that data splits are partitioned strictly by patient admission so that time-series windows from the same ICU stay do not appear in both training and test sets. Since the target description is silent on how data partitioning is performed, the status is UNKNOWN.",
+    "evidence_lines": "L56-L59",
+    "what_would_resolve_it": "Are the train, validation, and test data splits defined strictly by patient admission identifier, such that no ICU stay contributes monitoring windows or sequences to both sides of the split?",
+    "source_doc_id": "arx_2603.00060"
+  },
+  {
+    "axis": "A_isolation",
+    "subtype": "A1",
+    "status": "UNKNOWN",
+    "source_assumption": "Hyper-parameters and model evaluation were cross-validated using nested 5-fold cross-validation within the pooled discovery dataset of 1151 early AD participants.",
+    "target_restatement": "Were the patient monitoring streams partitioned by distinct ICU admissions or patient IDs so that data from the same patient never appears in both training and testing sets?",
+    "rationale": "The source paper relies on nested 5-fold cross-validation in the discovery dataset and separate external validation cohorts to evaluate generalization, assuming that data splitting prevents information leakage during hyper-parameter tuning and feature evaluation.",
+    "evidence_lines": "L38",
+    "what_would_resolve_it": "Are the train and test splits made by patient admission, so that no ICU stay contributes time windows to both sides?",
+    "source_doc_id": "arx_2111.04174"
+  },
+  {
+    "axis": "C_domain_of_validity",
+    "subtype": "C3",
+    "status": "UNKNOWN",
+    "source_assumption": "The paper assumes a transductive setting where auxiliary factors of testing samples are known beforehand to construct the factor graph.",
+    "target_restatement": "Are the auxiliary sociodemographic or clinical risk factors used to build the patient similarity graph completely known and available for all prospective ICU test admissions before generating sepsis predictions?",
+    "rationale": "The method relies on a transductive assumption where auxiliary factor values of testing samples are known beforehand to construct the spectral factor graph. For the target setting of ICU patients, this would require that the auxiliary demographic or clinical factors used for graph construction are fully known and available for all target test patients.",
+    "evidence_lines": "L18",
+    "what_would_resolve_it": "Are the auxiliary sociodemographic or clinical risk factors used to build the patient similarity graph completely known and available for all prospective ICU test admissions before generating sepsis predictions?",
+    "source_doc_id": "arx_2410.00946"
+  },
+  {
+    "axis": "B_legitimacy",
+    "subtype": null,
+    "status": "UNKNOWN",
+    "source_assumption": "The source study defines the sepsis onset target label using the time of antibiotic administration by attending physicians (T0).",
+    "target_restatement": "Do the target labels or prediction windows rely on the timing of clinician interventions such as antibiotic administration, or are they defined independently of treatment actions?",
+    "rationale": "The source paper defines the sepsis detection moment (T0) as the exact time antibiotics were administered by attending physicians (L29). This means the outcome label depends directly on a downstream clinical action (prescribing antibiotics), and the prediction models use data leading up to that clinical decision. For the target claim regarding predicting sepsis from continuous vital-sign monitoring streams, the target must similarly ensure that the prediction time point does not implicitly or explicitly leak the timing of treatment initiation or clinician intervention used to define the onset.",
+    "evidence_lines": "L29",
+    "what_would_resolve_it": "Were the target sepsis onset labels defined purely by physiological criteria or clinical diagnosis codes independent of the exact timestamp of antibiotic initiation?",
+    "source_doc_id": "PMC6925691"
+  },
+  {
+    "axis": "A_isolation",
+    "subtype": "A4",
+    "status": "UNKNOWN",
+    "source_assumption": "The source paper assumes that models can be evaluated using either an 80/20 shuffled split (7100 training and 1845 test datapoints) or a leave-one-subject-out approach where each subject's data (averaging 50 datapoints) is excluded from the training set.",
+    "target_restatement": "Are the train and test splits for the sepsis prediction model made by patient admission, ensuring that no patient's continuous monitoring streams contribute windows to both sides?",
+    "rationale": "The source paper explicitly uses a leave-one-subject-out approach and an 80/20 train-test split where shuffled datapoints are split, which requires ensuring that data from the same patient does not inappropriately leak across the training and testing boundaries depending on the split strategy. For the target setting of predicting sepsis from continuous vital-sign monitoring streams, it is unknown whether the evaluation protocol isolates patient data such that training and testing sets are strictly separated by patient admission.",
+    "evidence_lines": "L37",
+    "what_would_resolve_it": "Are the train and test splits for the sepsis prediction model made by patient admission, ensuring that no patient's continuous monitoring streams contribute windows to both sides?",
+    "source_doc_id": "PMC8662454"
+  },
+  {
+    "axis": "A_isolation",
+    "subtype": "A4",
+    "status": "UNKNOWN",
+    "source_assumption": "Allocating the entirety of each patient record (600 patients for training, 400 patients for testing from MIMIC-III) to either the training or test set to prevent data leakage.",
+    "target_restatement": "Are the train and test splits partitioned by patient ID, such that no patient's continuous vital-sign monitoring streams contribute windows to both the training and testing sets?",
+    "rationale": "The source paper allocated the entirety of each patient record to either the training or test set (\"Allocating the entirety of each record to either test or training set ensures that we do not overestimate the performance of the algorithm by using data points from patients in the training set to evaluate the algorithm\"). For the target system predicting sepsis from continuous vital-sign monitoring, the analogous condition requires that data splits be separated at the patient level so that records from the same patient do not appear in both training and test sets. Because the target description states nothing about data splitting protocols, the status is UNKNOWN.",
+    "evidence_lines": "L45",
+    "what_would_resolve_it": "Provide the exact patient-level partitioning protocol used to divide the dataset into training and test folds.",
+    "source_doc_id": "bio_5e4102086c00"
+  },
+  {
+    "axis": "A_isolation",
+    "subtype": "A4",
+    "status": "UNKNOWN",
+    "source_assumption": "The source paper assumes that patient encounters are randomly split into 80% training and 20% independent test sets across 10-fold cross-validation (L62).",
+    "target_restatement": "Are patient admissions or ICU stays strictly partitioned so that no single patient has data appearing in both the training and test sets?",
+    "rationale": "The source paper relies on a random split of encounters into training (80%) and independent test (20%) sets within 10-fold cross-validation (L62). The target description for ICU patients says nothing about how training and testing partitions or splits are formed, nor whether multiple stays from the same patient are separated across partitions.",
+    "evidence_lines": "L62",
+    "what_would_resolve_it": "Are the train and test splits formed at the patient level, ensuring that no patient's ICU stays contribute data to both training and test sets?",
+    "source_doc_id": "PMC5829820"
+  },
+  {
+    "axis": "A_isolation",
+    "subtype": "A4",
+    "status": "UNKNOWN",
+    "source_assumption": "Within each database, data were randomly split into a training set (80%) and a test set (20%) at the ICU-stay level.",
+    "target_restatement": "Are the train and test partitions for predicting sepsis split at the patient level so that no individual patient contributes monitoring streams to both training and testing sets?",
+    "rationale": "The source paper split data into training and test sets at the ICU-stay level ('data were randomly split into a training set (80%) and a test set (20%) at the ICU-stay level') (L39). For the target system of ICU patients, the analogous condition demands that the data splits separate patient encounters or stays so that no single patient's data appears in both training and test sets. Since the target description does not specify how patient splits or cross-validation partitions are handled, the status is UNKNOWN.",
+    "evidence_lines": "L39",
+    "what_would_resolve_it": "Are the train and test partitions for predicting sepsis split at the patient level so that no individual patient contributes monitoring streams to both training and testing sets?",
+    "source_doc_id": "bio_87c89b478030"
+  }
+]

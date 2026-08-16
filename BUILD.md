@@ -6,7 +6,8 @@ Companion documents (human-facing, start at `README.md`):
 - `docs/01-thesis.md` — product thesis. `target_restatement` is load-bearing.
 - `docs/02-assumption-ledger.md` — domain rationale. Reference only. Do not implement its prose.
 - `docs/07-implementation-notes.md` — probed Paperclip CLI behaviour.
-- `data/ground_truth.csv` — benchmark labels. Human-curated. Never generate or edit this file.
+- `data/ground_truth.csv` — review-row labels. Human-curated. Never generate or edit this file.
+- `data/transfer_bench.jsonl` — 8-case conformance suite. Human-converted. Do not rewrite claims to telegraph leakage types.
 
 ## 0. What this is
 
@@ -96,6 +97,7 @@ transfer-audit/
     cli.py         T6 — typer entry point
   data/
     ground_truth.csv          HUMAN-CURATED. Read-only for the agent.
+    transfer_bench.jsonl      HUMAN-CONVERTED. 8-case conformance suite.
     schema/ledger_entry.json  generated from models.py
   eval/score.py    T7
   runs/            gitignored
@@ -294,16 +296,15 @@ T6 cli.py — typer:
   transfer-audit run --replay runs/<ts>
 Accept: run completes end to end in under 4 minutes, produces all four files.
 
-T7 eval/score.py — reads data/ground_truth.csv and a ledger, prints:
-  recall                fraction of labelled leakage types for which a matching
-                        axis/subtype entry was generated
-  precision             fraction of generated entries judged meaningful, see
-                        section 6 H3
-  status_distribution   counts and percentages of SATISFIED / VIOLATED /
-                        UNKNOWN / NA across all entries in a ledger
-Accept: prints recall and precision with the denominator alongside each, e.g.
-"recall 0.71 (12/17)", then the four-way status distribution. Small-n is fine;
-hiding it is not.
+T7 eval/score.py — not in the repository. The suite was scored 16 Aug 2026
+by the verifier in docs/08-transferbench.md, recorded in
+runs/conformance/results.json. Observed: 5 of 8, never a rate. L2 is 0 of 2.
+One of the five hits (TB11) was handed over by the claim text. Status
+distribution: 62 UNKNOWN / 0 SATISFIED / 0 VIOLATED / 0 NA, n=62, 1 drop.
+Uncovered: L3.1 (Tu 2018, Lyu 2021 unread). If a scorer is later written it
+must print "5 of 8" (never 0.625), then the four-way status distribution,
+and must not quietly bank TB11. Seven of eight types are one paper each;
+a rate implies a sampling distribution the suite does not have.
 
 FPR was dropped. H2 produced four negative controls, of which one is fetchable
 (NC04). n=1 is not a number. status_distribution measures the same property —
@@ -315,8 +316,8 @@ control and the file documents an honest attempt.
 
 ## 6. Human-only tasks — do not assign to the coding agent
 
-H1 data/ground_truth.csv. Seeded from arXiv:2207.07048 Table 1. The 14 rows
-marked TODO must be read off the PDF by a human. Critical path for T7.
+H1 data/ground_truth.csv. CLOSED. 20/20 rows labelled from Table 1; two
+adjudicated. File is read-only.
 
 H2 Clean negative controls. CLOSED. Four papers found, one fetchable
 (NC04 / arx_1807.01068). IEEE controls are paywalled. FPR dropped from T7
@@ -326,6 +327,13 @@ data/negative_controls.csv.
 H3 Precision judgement. Judge and score 10 generated entries as meaningful or not.
 Cannot be automated in 12 hours. Say n=10 on stage.
 
+H4 Claim conversion. CLOSED. 8 of 20 review rows converted to
+data/transfer_bench.jsonl. Claims written from how each primary study
+describes itself, not from the review's criticism (contamination procedure
+in docs/04-benchmark.md). Arp stands for L2 only. L3.1 is uncovered
+(UNCOVERED_L3.1 in the suite file). Vandewiele and Roberts not chased.
+data/ground_truth.csv is unchanged. Critical path for T7.
+
 ## 7. Two rules that must not be violated
 
 The tool generates questions, not verdicts. The source paper proves these errors
@@ -333,10 +341,10 @@ cannot be caught by reading papers. Any code, prompt, or copy that claims to
 DETECT leakage from text is wrong and will not survive judging. UNKNOWN with a
 good what_would_resolve_it is a success state, not a failure.
 
-Guard against UNKNOWN-spam. An agent maximising recall will mark every axis
+Guard against UNKNOWN-spam. An agent maximising conformance will mark every axis
 UNKNOWN. The mandatory specific what_would_resolve_it field is the structural
-guard; reporting precision and status_distribution alongside recall is the
-reported guard. Never report recall alone.
+guard; reporting precision and status_distribution alongside the 8-case count
+is the reported guard. Never report a rate. Never report conformance alone.
 
 ## 8. Demo path
 
@@ -346,6 +354,6 @@ The only path that must work flawlessly. Pre-compute everything else.
 2. transfer-audit run — under 4 minutes, live
 3. Report opens: five axes, mixed statuses, every claim traceable to a doc id
 4. Point at one VIOLATED entry — this is the finding
-5. transfer-audit score — recall, precision, and the status distribution, shown from file
+5. transfer-audit score — conformance as "N of 8", precision, and the status distribution, shown from file. L3.1 is uncovered.
 
 Build the --replay flag early, not at 10am on Sunday.

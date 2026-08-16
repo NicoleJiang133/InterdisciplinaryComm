@@ -1,0 +1,663 @@
+{
+  "papers": [
+    {
+      "doc_id": "arx_2408.02496",
+      "title": "Automatic rating of incomplete hippocampal inversions evaluated across   multiple cohorts",
+      "slots": [
+        {
+          "slot": "system",
+          "judgement": "mapped",
+          "paper_value": "participants from the multicentric IMAGEN study, QTIM and QTAB studies, and UKBiobank",
+          "target_value": "ICU patients",
+          "note": "both sides instantiate system; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "state_variable",
+          "judgement": "mapped",
+          "paper_value": "Incomplete Hippocampal Inversion",
+          "target_value": "development of sepsis",
+          "note": "both sides instantiate state_variable; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "perturbation",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "readout",
+          "judgement": "mapped",
+          "paper_value": "coronal slices of T1 weighted MR images",
+          "target_value": "continuous vital-sign monitoring streams",
+          "note": "both sides instantiate readout; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "constraints",
+          "judgement": "unmapped",
+          "paper_value": "participants with a T1-weighted anatomical MRI acquired at 3 Tesla that passed a visual quality check during rating",
+          "target_value": null,
+          "note": "the source instantiates constraints (participants with a T1-weighted anatomical MRI acquired at 3 Tesla that passed a visual quality check during rating); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        },
+        {
+          "slot": "failure_mode",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "isolation_unit",
+          "judgement": "unmapped",
+          "paper_value": "participant",
+          "target_value": null,
+          "note": "the source instantiates isolation_unit (participant); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        }
+      ],
+      "mapped": 3,
+      "unmapped": 2,
+      "extraction_quality": 5,
+      "break_richness": 2,
+      "admitted": true
+    },
+    {
+      "doc_id": "PMC6925691",
+      "title": "Machine Learning Models for Analysis of Vital Signs Dynamics: A Case for Sepsis Onset Prediction",
+      "slots": [
+        {
+          "slot": "system",
+          "judgement": "mapped",
+          "paper_value": "adult ICU population",
+          "target_value": "ICU patients",
+          "note": "both sides instantiate system; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "state_variable",
+          "judgement": "mapped",
+          "paper_value": "sepsis",
+          "target_value": "development of sepsis",
+          "note": "both sides instantiate state_variable; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "perturbation",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "readout",
+          "judgement": "mapped",
+          "paper_value": "bedside monitor data in the intensive care unit (ICU)",
+          "target_value": "continuous vital-sign monitoring streams",
+          "note": "both sides instantiate readout; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "constraints",
+          "judgement": "unmapped",
+          "paper_value": "Adult patients >18 years admitted to the general intensive care department Patients stayed a minimum of 12 hours in the ICU Patients did not meet SIRS criteria at time of admission to the ICU Continuous documented measurements were available for at least 12 hours for vital signs: heart rate, temperature, and mean arterial blood pressure as recorded from an arterial line and respiratory rate as recorded from the mechanical ventilator",
+          "target_value": null,
+          "note": "the source instantiates constraints (Adult patients >18 years admitted to the general intensive care department Patients stayed a minimum of 12 hours in the ICU Patients did not meet SIRS criteria at time of admission to the ICU Continuous documented measurements were available for at least 12 hours for vital signs: heart rate, temperature, and mean arterial blood pressure as recorded from an arterial line and respiratory rate as recorded from the mechanical ventilator); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        },
+        {
+          "slot": "failure_mode",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "isolation_unit",
+          "judgement": "unmapped",
+          "paper_value": "patient",
+          "target_value": null,
+          "note": "the source instantiates isolation_unit (patient); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        }
+      ],
+      "mapped": 3,
+      "unmapped": 2,
+      "extraction_quality": 5,
+      "break_richness": 2,
+      "admitted": true
+    },
+    {
+      "doc_id": "arx_2603.00060",
+      "title": "Learning Under Extreme Data Scarcity: Subject-Level Evaluation of Lightweight CNNs for fMRI-Based Prodromal Parkinsons Detection",
+      "slots": [
+        {
+          "slot": "system",
+          "judgement": "mapped",
+          "paper_value": "40 subjects, consisting of 20 prodromal Parkinsons cases and 20 healthy controls",
+          "target_value": "ICU patients",
+          "note": "both sides instantiate system; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "state_variable",
+          "judgement": "mapped",
+          "paper_value": "prodromal Parkinsons disease",
+          "target_value": "development of sepsis",
+          "note": "both sides instantiate state_variable; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "perturbation",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "readout",
+          "judgement": "mapped",
+          "paper_value": "resting state fMRI",
+          "target_value": "continuous vital-sign monitoring streams",
+          "note": "both sides instantiate readout; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "constraints",
+          "judgement": "unmapped",
+          "paper_value": "20 prodromal subjects, primarily idiopathic REM sleep behaviour disorder cases, and 20 healthy control subjects matched by age and demographic characteristics",
+          "target_value": null,
+          "note": "the source instantiates constraints (20 prodromal subjects, primarily idiopathic REM sleep behaviour disorder cases, and 20 healthy control subjects matched by age and demographic characteristics); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        },
+        {
+          "slot": "failure_mode",
+          "judgement": "unmapped",
+          "paper_value": "a tendency to overpredict the prodromal label",
+          "target_value": null,
+          "note": "the source instantiates failure_mode (a tendency to overpredict the prodromal label); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        },
+        {
+          "slot": "isolation_unit",
+          "judgement": "unmapped",
+          "paper_value": "subject",
+          "target_value": null,
+          "note": "the source instantiates isolation_unit (subject); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        }
+      ],
+      "mapped": 3,
+      "unmapped": 3,
+      "extraction_quality": 6,
+      "break_richness": 3,
+      "admitted": true
+    },
+    {
+      "doc_id": "PMC8662454",
+      "title": "Vital Signs Prediction for COVID-19 Patients in ICU",
+      "slots": [
+        {
+          "slot": "system",
+          "judgement": "mapped",
+          "paper_value": "COVID-19 patients in ICU",
+          "target_value": "ICU patients",
+          "note": "both sides instantiate system; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "state_variable",
+          "judgement": "mapped",
+          "paper_value": "heart rate, respiration rate, and oxygen saturation",
+          "target_value": "development of sepsis",
+          "note": "both sides instantiate state_variable; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "perturbation",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "readout",
+          "judgement": "mapped",
+          "paper_value": "monitored vital signs",
+          "target_value": "continuous vital-sign monitoring streams",
+          "note": "both sides instantiate readout; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "constraints",
+          "judgement": "unmapped",
+          "paper_value": "patients who were monitored for less than 24 h were excluded",
+          "target_value": null,
+          "note": "the source instantiates constraints (patients who were monitored for less than 24 h were excluded); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        },
+        {
+          "slot": "failure_mode",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "isolation_unit",
+          "judgement": "unmapped",
+          "paper_value": "subject",
+          "target_value": null,
+          "note": "the source instantiates isolation_unit (subject); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        }
+      ],
+      "mapped": 3,
+      "unmapped": 2,
+      "extraction_quality": 5,
+      "break_richness": 2,
+      "admitted": true
+    },
+    {
+      "doc_id": "arx_2509.07237",
+      "title": "Normative Modelling in Neuroimaging: A Practical Guide for Researchers",
+      "slots": [
+        {
+          "slot": "system",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": "ICU patients",
+          "note": null
+        },
+        {
+          "slot": "state_variable",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": "development of sepsis",
+          "note": null
+        },
+        {
+          "slot": "perturbation",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "readout",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": "continuous vital-sign monitoring streams",
+          "note": null
+        },
+        {
+          "slot": "constraints",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "failure_mode",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "isolation_unit",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        }
+      ],
+      "mapped": 0,
+      "unmapped": 0,
+      "extraction_quality": 0,
+      "break_richness": 0,
+      "admitted": false
+    },
+    {
+      "doc_id": "bio_5e4102086c00",
+      "title": "A Machine Learning Approach to Predict Hypotensive Events in ICU Settings",
+      "slots": [
+        {
+          "slot": "system",
+          "judgement": "mapped",
+          "paper_value": "ICU settings",
+          "target_value": "ICU patients",
+          "note": "both sides instantiate system; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "state_variable",
+          "judgement": "mapped",
+          "paper_value": "hypotension",
+          "target_value": "development of sepsis",
+          "note": "both sides instantiate state_variable; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "perturbation",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "readout",
+          "judgement": "mapped",
+          "paper_value": "three sensor lines which output six physiological signals including ABP (Arterial Blood Pressure), HR (Heart Rate), Systolic Blood Pressure (Sys), Diastolic Blood Pressure (Dia), Resp (Respiration rate), and peripheral capillary oxygen saturation (SpO2)",
+          "target_value": "continuous vital-sign monitoring streams",
+          "note": "both sides instantiate readout; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "constraints",
+          "judgement": "unmapped",
+          "paper_value": "remove i) spikes, where the variation of the signal value is more than 25% Of the baseline in one-minute period and ii) segments with values outside of the clinical range listed in Table 2. Then, we assume that the missing parts of the physiological signals can be interpolated if the signal(s) value were missed for less than 5 minutes, otherwise that period is removed.",
+          "target_value": null,
+          "note": "the source instantiates constraints (remove i) spikes, where the variation of the signal value is more than 25% Of the baseline in one-minute period and ii) segments with values outside of the clinical range listed in Table 2. Then, we assume that the missing parts of the physiological signals can be interpolated if the signal(s) value were missed for less than 5 minutes, otherwise that period is removed.); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        },
+        {
+          "slot": "failure_mode",
+          "judgement": "unmapped",
+          "paper_value": "false positive",
+          "target_value": null,
+          "note": "the source instantiates failure_mode (false positive); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        },
+        {
+          "slot": "isolation_unit",
+          "judgement": "unmapped",
+          "paper_value": "patient",
+          "target_value": null,
+          "note": "the source instantiates isolation_unit (patient); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        }
+      ],
+      "mapped": 3,
+      "unmapped": 3,
+      "extraction_quality": 6,
+      "break_richness": 3,
+      "admitted": true
+    },
+    {
+      "doc_id": "arx_2111.04174",
+      "title": "Prediction of cognitive decline for enrichment of Alzheimer's disease   clinical trials",
+      "slots": [
+        {
+          "slot": "system",
+          "judgement": "mapped",
+          "paper_value": "early Alzheimer's disease and presymptomatic individuals",
+          "target_value": "ICU patients",
+          "note": "both sides instantiate system; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "state_variable",
+          "judgement": "mapped",
+          "paper_value": "cognitive decline",
+          "target_value": "development of sepsis",
+          "note": "both sides instantiate state_variable; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "perturbation",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "readout",
+          "judgement": "mapped",
+          "paper_value": "Clinical Dementia Rating Scale – Sum of Boxes (CDR-SB)",
+          "target_value": "continuous vital-sign monitoring streams",
+          "note": "both sides instantiate readout; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "constraints",
+          "judgement": "unmapped",
+          "paper_value": "at least 50 years of age, diagnosis of MCI or AD dementia at baseline (or cognitively unimpaired at baseline for presymptomatic), key demographics, APOE genotyping, cognitive test scores, MRI, and sufficient follow-up visits",
+          "target_value": null,
+          "note": "the source instantiates constraints (at least 50 years of age, diagnosis of MCI or AD dementia at baseline (or cognitively unimpaired at baseline for presymptomatic), key demographics, APOE genotyping, cognitive test scores, MRI, and sufficient follow-up visits); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        },
+        {
+          "slot": "failure_mode",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "isolation_unit",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        }
+      ],
+      "mapped": 3,
+      "unmapped": 1,
+      "extraction_quality": 4,
+      "break_richness": 1,
+      "admitted": true
+    },
+    {
+      "doc_id": "PMC5829820",
+      "title": "Multicentre validation of a sepsis prediction algorithm using only vital sign data in the emergency department, general ward and ICU",
+      "slots": [
+        {
+          "slot": "system",
+          "judgement": "mapped",
+          "paper_value": "mixed-ward population from the University of California, San Francisco (UCSF) Medical Center, intensive care unit dataset from the Beth Israel Deaconess Medical Center, Stanford Medical Center, Oroville Hospital, Bakersfield Heart Hospital, and Cape Regional Medical Center",
+          "target_value": "ICU patients",
+          "note": "both sides instantiate system; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "state_variable",
+          "judgement": "mapped",
+          "paper_value": "sepsis, severe sepsis, and septic shock",
+          "target_value": "development of sepsis",
+          "note": "both sides instantiate state_variable; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "perturbation",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "readout",
+          "judgement": "mapped",
+          "paper_value": "electronic health records",
+          "target_value": "continuous vital-sign monitoring streams",
+          "note": "both sides instantiate readout; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "constraints",
+          "judgement": "unmapped",
+          "paper_value": "All patients over the age of 18 years were considered for this study... Patients in our final datasets were required to have at least one measurement for each of the six vital signs... exclude patients whose septic condition onset time was within 7 hours after the start of their record... Patients with sepsis onset after 2000 hours postadmission were also excluded",
+          "target_value": null,
+          "note": "the source instantiates constraints (All patients over the age of 18 years were considered for this study... Patients in our final datasets were required to have at least one measurement for each of the six vital signs... exclude patients whose septic condition onset time was within 7 hours after the start of their record... Patients with sepsis onset after 2000 hours postadmission were also excluded); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        },
+        {
+          "slot": "failure_mode",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "isolation_unit",
+          "judgement": "unmapped",
+          "paper_value": "encounter",
+          "target_value": null,
+          "note": "the source instantiates isolation_unit (encounter); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        }
+      ],
+      "mapped": 3,
+      "unmapped": 2,
+      "extraction_quality": 5,
+      "break_richness": 2,
+      "admitted": true
+    },
+    {
+      "doc_id": "arx_2410.00946",
+      "title": "Spectral Graph Sample Weighting for Interpretable Sub-cohort Analysis in   Predictive Models for Neuroimaging",
+      "slots": [
+        {
+          "slot": "system",
+          "judgement": "mapped",
+          "paper_value": "NCANDA and ADNI participants",
+          "target_value": "ICU patients",
+          "note": "both sides instantiate system; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "state_variable",
+          "judgement": "mapped",
+          "paper_value": "initiation of heavy alcohol drinking in young adulthood / Dementia vs. Mild Cognitive Impairment (MCI)",
+          "target_value": "development of sepsis",
+          "note": "both sides instantiate state_variable; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "perturbation",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "readout",
+          "judgement": "mapped",
+          "paper_value": "imaging and neuropsychological measures",
+          "target_value": "continuous vital-sign monitoring streams",
+          "note": "both sides instantiate readout; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "constraints",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "failure_mode",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "isolation_unit",
+          "judgement": "unmapped",
+          "paper_value": "subject",
+          "target_value": null,
+          "note": "the source instantiates isolation_unit (subject); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        }
+      ],
+      "mapped": 3,
+      "unmapped": 1,
+      "extraction_quality": 4,
+      "break_richness": 1,
+      "admitted": true
+    },
+    {
+      "doc_id": "bio_87c89b478030",
+      "title": "Standardized Multicenter Critical Care Database Integrating Minute-Level Vital Signs, Laboratory Tests, Interventions, and Outcomes: Profile of the OneICU Database",
+      "slots": [
+        {
+          "slot": "system",
+          "judgement": "mapped",
+          "paper_value": "critically ill patient data from 12 tertiary care hospitals",
+          "target_value": "ICU patients",
+          "note": "both sides instantiate system; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "state_variable",
+          "judgement": "mapped",
+          "paper_value": "hypotensive events",
+          "target_value": "development of sepsis",
+          "note": "both sides instantiate state_variable; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "perturbation",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "readout",
+          "judgement": "mapped",
+          "paper_value": "OneICU database, Medical Information Mart for Intensive Care (MIMIC)-IV, and eICU",
+          "target_value": "continuous vital-sign monitoring streams",
+          "note": "both sides instantiate readout; the condition can be stated in the target's language."
+        },
+        {
+          "slot": "constraints",
+          "judgement": "unmapped",
+          "paper_value": "Patients were eligible if they were admitted to medical, surgical, emergency, pediatric, neonatal ICUs, or coronary care, stroke care, or high care units and had at least one vital sign measurement.",
+          "target_value": null,
+          "note": "the source instantiates constraints (Patients were eligible if they were admitted to medical, surgical, emergency, pediatric, neonatal ICUs, or coronary care, stroke care, or high care units and had at least one vital sign measurement.); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        },
+        {
+          "slot": "failure_mode",
+          "judgement": "absent",
+          "paper_value": null,
+          "target_value": null,
+          "note": null
+        },
+        {
+          "slot": "isolation_unit",
+          "judgement": "unmapped",
+          "paper_value": "ICU-stay",
+          "target_value": null,
+          "note": "the source instantiates isolation_unit (ICU-stay); the target states no counterpart. A precise restatement cannot be formed. This is where the transfer is most likely to break."
+        }
+      ],
+      "mapped": 3,
+      "unmapped": 2,
+      "extraction_quality": 5,
+      "break_richness": 2,
+      "admitted": true
+    }
+  ],
+  "admitted_ids": [
+    "arx_2408.02496",
+    "PMC6925691",
+    "arx_2603.00060",
+    "PMC8662454",
+    "bio_5e4102086c00",
+    "arx_2111.04174",
+    "PMC5829820",
+    "arx_2410.00946",
+    "bio_87c89b478030"
+  ],
+  "held_out_ids": [
+    "arx_2509.07237"
+  ],
+  "break_points": [
+    {
+      "slot": "isolation_unit",
+      "papers_stating": 8,
+      "extracted": 9,
+      "target_states_it": false,
+      "paper_values": [
+        "participant",
+        "patient",
+        "subject",
+        "subject",
+        "patient",
+        "encounter",
+        "subject",
+        "ICU-stay"
+      ]
+    },
+    {
+      "slot": "constraints",
+      "papers_stating": 8,
+      "extracted": 9,
+      "target_states_it": false,
+      "paper_values": [
+        "participants with a T1-weighted anatomical MRI acquired at 3 Tesla that passed a visual quality check during rating",
+        "Adult patients >18 years admitted to the general intensive care department Patients stayed a minimum of 12 hours in the ICU Patients did not meet SIRS criteria at time of admission to the ICU Continuous documented measurements were available for at least 12 hours for vital signs: heart rate, temperature, and mean arterial blood pressure as recorded from an arterial line and respiratory rate as recorded from the mechanical ventilator",
+        "20 prodromal subjects, primarily idiopathic REM sleep behaviour disorder cases, and 20 healthy control subjects matched by age and demographic characteristics",
+        "patients who were monitored for less than 24 h were excluded",
+        "remove i) spikes, where the variation of the signal value is more than 25% Of the baseline in one-minute period and ii) segments with values outside of the clinical range listed in Table 2. Then, we assume that the missing parts of the physiological signals can be interpolated if the signal(s) value were missed for less than 5 minutes, otherwise that period is removed.",
+        "at least 50 years of age, diagnosis of MCI or AD dementia at baseline (or cognitively unimpaired at baseline for presymptomatic), key demographics, APOE genotyping, cognitive test scores, MRI, and sufficient follow-up visits",
+        "All patients over the age of 18 years were considered for this study... Patients in our final datasets were required to have at least one measurement for each of the six vital signs... exclude patients whose septic condition onset time was within 7 hours after the start of their record... Patients with sepsis onset after 2000 hours postadmission were also excluded",
+        "Patients were eligible if they were admitted to medical, surgical, emergency, pediatric, neonatal ICUs, or coronary care, stroke care, or high care units and had at least one vital sign measurement."
+      ]
+    },
+    {
+      "slot": "failure_mode",
+      "papers_stating": 2,
+      "extracted": 9,
+      "target_states_it": false,
+      "paper_values": [
+        "a tendency to overpredict the prodromal label",
+        "false positive"
+      ]
+    }
+  ],
+  "min_extraction_quality": 1
+}

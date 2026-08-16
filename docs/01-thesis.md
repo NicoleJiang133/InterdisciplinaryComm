@@ -1,6 +1,20 @@
-# Thesis: the failure is fidelity, not comprehension
+# Thesis: review capacity is the bottleneck
 
 This is the product argument. The pipeline that follows from it is in [03-architecture.md](03-architecture.md). The axes that structure the output are in [02-assumption-ledger.md](02-assumption-ledger.md).
+
+## Review capacity
+
+[Sundial](https://www.sundial.md/blog/announcing-sundial) states the problem as: the length of task an agent can finish on its own roughly doubles every few months, while a human's capacity to review stays constant. Closing the gap means making the work legible: what was done, by whom, and why.
+
+That is this project's thesis, arrived at independently.
+
+A scientist borrowing a method from another discipline cannot review every assumption it carries. Review capacity is the bottleneck — not comprehension, not access to the literature. This tool amplifies review capacity by making a borrowed result's validity conditions legible:
+
+1. what the source result depends on
+2. what that becomes in the target system
+3. therefore, what to ask
+
+The 70% reading is how that bottleneck shows up in a transferred scientific result. Fidelity is the mechanism that makes the three steps checkable.
 
 ## The 70% version
 
@@ -39,6 +53,12 @@ Same slot. Different object. Structure preserved. That is the fidelity argument 
 If the scientist stores "split by subject", they have the 70% version of a condition that, in Kuramoto, was "do not mix realisations of the noise." A restatement that cannot carry the object's name cannot be checked. `target_restatement` exists to carry it.
 
 n=4 extracted source-leg papers per out-of-domain run, plus the fixture. Small enough to say, specific enough to demonstrate.
+
+## Provenance
+
+A record of what was done, by whom, and why is what makes agent work reviewable at all. That is a design principle, not a feature list.
+
+Every ledger claim carries `source_doc_id` and `evidence_lines`. Those two fields are the minimum a reviewer needs to check the translation against the paper rather than against the model's summary of it. Literature claims are verified against source full text via `paperclip repo commit`, with an audit trail in `repo log`. Nothing in the ledger is allowed to float free of that trail: if it cannot point at evidence, it is not written.
 
 ## What this is not
 

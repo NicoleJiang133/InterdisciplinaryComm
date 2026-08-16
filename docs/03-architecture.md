@@ -8,7 +8,7 @@ claim text
     → retrieve   source papers, role-split across disciplines
     → align      structural slot comparison; gates the ledger
     → ledger     one LedgerEntry per admitted paper
-    → report     not built
+    → report     HTML + Markdown (T5)
 ```
 
 Literature access is the `paperclip` CLI via subprocess. The one thing Paperclip cannot do is run a model over arbitrary user text, so ingest is the only stage that calls the Anthropic API. Everything that reads papers stays in Paperclip.
@@ -71,11 +71,26 @@ One `paperclip map` per search id, schema passed as file contents inline, never 
 
 Status is about the target. On the two-sentence fixture the ledger is 9/9 UNKNOWN, which is the correct answer given that input. Resolving those entries to SATISFIED or VIOLATED needs a target document the claim does not contain. That path is not built ([06-roadmap.md](06-roadmap.md)).
 
+## Report
+
+`render_report(entries, alignment=, context=) -> html, markdown`
+
+Self-contained HTML (inline CSS, no CDN, no JS) and a Markdown handoff. Layout is ported from the source-leg-rerun canvas: metric row, break-point table with n in every cell, slot-object panel (oscillator / patch / subject), ledger grouped by axis, status distribution. A worked-example panel at the top of both formats shows the strongest entry as source condition → target restatement → the question. Markdown puts `source_assumption` and `target_restatement` adjacent so a scientist can correct the translation.
+
+Committed examples: [example-report.html](example-report.html), [example-report.md](example-report.md), rendered from the fixture ledger (9/9 UNKNOWN).
+
+## CLI
+
+`transfer-audit run --claim-file path.txt [--source-discipline X] [--out runs/<ts>]`
+
+`transfer-audit run --replay runs/<ts>`
+
+`--replay` re-renders `report.html` and `report.md` from a saved run with no network call. Build that path first; it is the demo safety net. `score` and `answer` are not built.
+
 ## Not built
 
-- HTML report (T5). Do not design from scratch. The live canvas — slot-object comparison (oscillator / patch / subject), break-point tables with n in the figure, extraction rates — is the layout to port.
-- CLI (`run`, `score`, `--replay`)
-- `eval/score.py` — recall against `data/ground_truth.csv` has never been computed
+- `score` and `answer` CLI commands
+- `eval/score.py` — not in the repository. The suite was scored 16 Aug 2026: 5 of 8 (L2 0 of 2; TB11 handed over). Report "N of 8", never a rate. See [08-transferbench.md](08-transferbench.md).
 - Target-document ingest (protocol / preregistration / README)
 - Round-trip fidelity field
 - Answer loop that lets a scientist edit a restatement and persist the correction

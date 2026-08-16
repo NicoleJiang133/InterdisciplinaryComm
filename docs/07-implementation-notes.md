@@ -331,10 +331,10 @@ and their original confidence, with the table evidence backfilled. Row 20 previo
 held the placeholder `MULTIPLE`, which is not a legal value, and was filled from the
 table.
 
-Coverage across the 20 rows is 32 annotations, and all eight types appear. L2
-(illegitimate features) and L3.1 (temporal leakage) appear in only two rows each, so
-per-type recall on those two will be extremely noisy — quote whole-benchmark recall with
-its denominator rather than per-type recall for them.
+Coverage across the 20 rows is 32 annotations, and all eight types appear. The
+runnable score line is the 8-case conformance suite (`data/transfer_bench.jsonl`),
+not a recall rate over these 20 reviews. L3.1 is uncovered in the suite. Report
+"N of 8", never a rate.
 
 ---
 

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assumption ledger — fixture</title>
+<style>
+  :root {
+    --text: #1a1a1a;
+    --muted: #5c5c5c;
+    --rule: #d6d6d6;
+    --bg: #fafafa;
+    --card: #ffffff;
+    --ask: #111111;
+    --satisfied: #1b7f4e;
+    --violated: #b42318;
+    --unknown: #9a6700;
+    --na: #667085;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  main {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 40px 28px 80px;
+  }
+  h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; }
+  h3 { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .claim { font-size: 18px; margin: 16px 0 28px; }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 24px 0 8px;
+  }
+  .metric { padding: 8px 0; }
+  .metric .n {
+    display: block;
+    font-size: 40px;
+    line-height: 1.1;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+  .metric .lbl { display: block; color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .worked {
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 28px 0;
+    margin: 8px 0 8px;
+  }
+  .worked ol { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+  .worked li { counter-increment: step; margin: 0 0 22px; }
+  .worked li:last-child { margin-bottom: 0; }
+  .worked .kicker {
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .worked .kicker::before { content: counter(step) " · "; }
+  .worked .ask {
+    font-size: 26px;
+    line-height: 1.25;
+    font-weight: 600;
+    color: var(--ask);
+  }
+  .worked blockquote {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+  .objects {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .object {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    padding: 16px;
+  }
+  .object .obj { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+  .object .disc { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .entry {
+    border-top: 1px solid var(--rule);
+    padding: 20px 0;
+  }
+  .entry-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+  .status {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .status.SATISFIED { color: var(--satisfied); }
+  .status.VIOLATED { color: var(--violated); }
+  .status.UNKNOWN { color: var(--unknown); }
+  .status.NA { color: var(--na); }
+  .doc { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+  .pair h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .pair p, .ask-block p { margin: 0; font-size: 16px; }
+  .ask-block { margin-top: 12px; }
+  .ask-block p { font-size: 20px; font-weight: 600; line-height: 1.3; }
+  .meta { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  @media (max-width: 720px) {
+    .metrics, .objects, .pair { grid-template-columns: 1fr; }
+    .worked .ask { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Assumption ledger — fixture</h1>
+  <p class="claim">A random-forest classifier trained on resting-state fMRI connectivity matrices predicts conversion to Alzheimer&#39;s disease with 92% accuracy, so the same connectivity-based approach should predict which ICU patients will develop sepsis from their continuous vital-sign monitoring streams.</p>
+
+  <section class="worked">
+    <h2 style="margin-top:0">Why this is the question</h2>
+    <p class="muted">B_legitimacy · PMC6925691</p>
+    <ol>
+      <li>
+        <div class="kicker">What the source result depends on</div>
+        <blockquote>The source study defines the sepsis onset target label using the time of antibiotic administration by attending physicians (T0).</blockquote>
+      </li>
+      <li>
+        <div class="kicker">What that becomes in the target system</div>
+        <blockquote>Do the target labels or prediction windows rely on the timing of clinician interventions such as antibiotic administration, or are they defined independently of treatment actions?</blockquote>
+      </li>
+      <li>
+        <div class="kicker">Therefore, what to ask</div>
+        <div class="ask">Were the target sepsis onset labels defined purely by physiological criteria or clinical diagnosis codes independent of the exact timestamp of antibiotic initiation?</div>
+      </li>
+    </ol>
+  </section>
+
+  <div class="metrics">
+    <div class="metric"><span class="n">9</span><span class="lbl">ledger entries</span></div>
+    <div class="metric"><span class="n">9 / 9</span><span class="lbl">UNKNOWN</span></div>
+    <div class="metric"><span class="n">3</span><span class="lbl">axes with an entry</span></div>
+    <div class="metric"><span class="n">9</span><span class="lbl">papers extracted · 1 held out</span></div>
+  </div>
+
+  <h2>Break points</h2>
+  <p class="muted">Unmapped slots among extracted papers. Denominator is n=9 in every cell. Do not read a count as a literature rate.</p>
+  <table>
+    <thead>
+      <tr><th>Slot</th><th>Stating it / n=9</th><th>Target</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>isolation_unit</td>
+        <td class="num">8 / n=9</td>
+        <td>silent</td>
+      </tr>
+      <tr>
+        <td>constraints</td>
+        <td class="num">8 / n=9</td>
+        <td>silent</td>
+      </tr>
+      <tr>
+        <td>failure_mode</td>
+        <td class="num">2 / n=9</td>
+        <td>silent</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Same slot, different ontology</h2>
+  <p class="muted">isolation_unit is the unit across which independence is assumed. Structure preserved; the object is not.</p>
+  <div class="objects">
+    <div class="object">
+      <div class="obj">subject</div>
+      <div class="disc">neuroimaging · n=fixture · n from the fMRI fixture</div>
+    </div>
+    <div class="object">
+      <div class="obj">oscillator</div>
+      <div class="disc">statistical physics · n=4 · or a realisation of the noise</div>
+    </div>
+    <div class="object">
+      <div class="obj">patch</div>
+      <div class="disc">optimal foraging · n=4 · or a forager</div>
+    </div>
+  </div>
+
+  <h2>Status distribution</h2>
+  <table>
+    <thead><tr><th>Status</th><th>Count</th><th>Share of 9</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="status SATISFIED">SATISFIED</span></td>
+        <td class="num">0</td>
+        <td class="num">0 / 9</td>
+      </tr>
+      <tr>
+        <td><span class="status VIOLATED">VIOLATED</span></td>
+        <td class="num">0</td>
+        <td class="num">0 / 9</td>
+      </tr>
+      <tr>
+        <td><span class="status UNKNOWN">UNKNOWN</span></td>
+        <td class="num">9</td>
+        <td class="num">9 / 9</td>
+      </tr>
+      <tr>
+        <td><span class="status NA">NA</span></td>
+        <td class="num">0</td>
+        <td class="num">0 / 9</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Ledger by axis</h2>
+  <h3>A_isolation · 7</h3>
+  <article class="entry">
+    <div class="entry-head">
+      <span class="status UNKNOWN">UNKNOWN</span>
+<span class="muted">A4</span>      <span class="doc">arx_2408.02496</span>
+    </div>
+    <div class="pair">
+      <div>
+        <h4>Source assumption</h4>
+        <p>The paper isolated 25% of participants from each cohort as an independent test set prior to analysis and stratified the split based on clinical and demographic variables to prevent data leakage.</p>
+      </div>
+      <div>
+        <h4>Target restatement</h4>
+        <p>Are ICU patient data splits partitioned by patient ID, such that continuous monitoring windows from the same ICU stay never appear in both the training and testing sets?</p>
+      </div>
+    </div>
+    <div class="ask-block">
+      <h4>Ask</h4>
+      <p>Are ICU patient data splits partitioned by patient ID, such that continuous monitoring windows from the same ICU stay never appear in both the training and testing sets?</p>
+    </div>
+    <p class="meta">arx_2408.02496 · evidence L39</p>
+  </article>
+  <article class="entry">
+    <div class="entry-head">
+      <span class="status UNKNOWN">UNKNOWN</span>
+<span class="muted">A4</span>      <span class="doc">arx_2603.00060</span>
+    </div>
+    <div class="pair">
+      <div>
+        <h4>Source assumption</h4>
+        <p>The source paper assumes that models evaluated on fMRI data must enforce strict subject-level splitting (Segmentation 2) where all 2D slices from a given subject are confined exclusively to a single partition (train, validation, or test) to prevent severe information leakage from 40 subjects across thousands of extracted slices.</p>
+      </div>
+      <div>
+        <h4>Target restatement</h4>
+        <p>Are the train, validation, and test partitions formed at the patient level, ensuring that multiple temporal windows or streams originating from the same ICU patient admission never cross over between training and testing sets?</p>
+      </div>
+    </div>
+    <div class="ask-block">
+      <h4>Ask</h4>
+      <p>Are the train, validation, and test data splits defined strictly by patient admission identifier, such that no ICU stay contributes monitoring windows or sequences to both sides of the split?</p>
+    </div>
+    <p class="meta">arx_2603.00060 · evidence L56-L59</p>
+  </article>
+  <article class="entry">
+    <div class="entry-head">
+      <span class="status UNKNOWN">UNKNOWN</span>
+<span class="muted">A1</span>      <span class="doc">arx_2111.04174</span>
+    </div>
+    <div class="pair">
+      <div>
+        <h4>Source assumption</h4>
+        <p>Hyper-parameters and model evaluation were cross-validated using nested 5-fold cross-validation within the pooled discovery dataset of 1151 early AD participants.</p>
+      </div>
+      <div>
+        <h4>Target restatement</h4>
+        <p>Were the patient monitoring streams partitioned by distinct ICU admissions or patient IDs so that data from the same patient never appears in both training and testing sets?</p>
+      </div>
+    </div>
+    <div class="ask-block">
+      <h4>Ask</h4>
+      <p>Are the train and test splits made by patient admission, so that no ICU stay contributes time windows to both sides?</p>
+    </div>
+    <p class="meta">arx_2111.04174 · evidence L38</p>
+  </article>
+  <article class="entry">
+    <div class="entry-head">
+      <span class="status UNKNOWN">UNKNOWN</span>
+<span class="muted">A4</span>      <span class="doc">PMC8662454</span>
+    </div>
+    <div class="pair">
+      <div>
+        <h4>Source assumption</h4>
+        <p>The source paper assumes that models can be evaluated using either an 80/20 shuffled split (7100 training and 1845 test datapoints) or a leave-one-subject-out approach where each subject&#39;s data (averaging 50 datapoints) is excluded from the training set.</p>
+      </div>
+      <div>
+        <h4>Target restatement</h4>
+        <p>Are the train and test splits for the sepsis prediction model made by patient admission, ensuring that no patient&#39;s continuous monitoring streams contribute windows to both sides?</p>
+      </div>
+    </div>
+    <div class="ask-block">
+      <h4>Ask</h4>
+      <p>Are the train and test splits for the sepsis prediction model made by patient admission, ensuring that no patient&#39;s continuous monitoring streams contribute windows to both sides?</p>
+    </div>
+    <p class="meta">PMC8662454 · evidence L37</p>
+  </article>
+  <article class="entry">
+    <div class="entry-head">
+      <span class="status UNKNOWN">UNKNOWN</span>
+<span class="muted">A4</span>      <span class="doc">bio_5e4102086c00</span>
+    </div>
+    <div class="pair">
+      <div>
+        <h4>Source assumption</h4>
+        <p>Allocating the entirety of each patient record (600 patients for training, 400 patients for testing from MIMIC-III) to either the training or test set to prevent data leakage.</p>
+      </div>
+      <div>
+        <h4>Target restatement</h4>
+        <p>Are the train and test splits partitioned by patient ID, such that no patient&#39;s continuous vital-sign monitoring streams contribute windows to both the training and testing sets?</p>
+      </div>
+    </div>
+    <div class="ask-block">
+      <h4>Ask</h4>
+      <p>Provide the exact patient-level partitioning protocol used to divide the dataset into training and test folds.</p>
+    </div>
+    <p class="meta">bio_5e4102086c00 · evidence L45</p>
+  </article>
+  <article class="entry">
+    <div class="entry-head">
+      <span class="status UNKNOWN">UNKNOWN</span>
+<span class="muted">A4</span>      <span class="doc">PMC5829820</span>
+    </div>
+    <div class="pair">
+      <div>
+        <h4>Source assumption</h4>
+        <p>The source paper assumes that patient encounters are randomly split into 80% training and 20% independent test sets across 10-fold cross-validation (L62).</p>
+      </div>
+      <div>
+        <h4>Target restatement</h4>
+        <p>Are patient admissions or ICU stays strictly partitioned so that no single patient has data appearing in both the training and test sets?</p>
+      </div>
+    </div>
+    <div class="ask-block">
+      <h4>Ask</h4>
+      <p>Are the train and test splits formed at the patient level, ensuring that no patient&#39;s ICU stays contribute data to both training and test sets?</p>
+    </div>
+    <p class="meta">PMC5829820 · evidence L62</p>
+  </article>
+  <article class="entry">
+    <div class="entry-head">
+      <span class="status UNKNOWN">UNKNOWN</span>
+<span class="muted">A4</span>      <span class="doc">bio_87c89b478030</span>
+    </div>
+    <div class="pair">
+      <div>
+        <h4>Source assumption</h4>
+        <p>Within each database, data were randomly split into a training set (80%) and a test set (20%) at the ICU-stay level.</p>
+      </div>
+      <div>
+        <h4>Target restatement</h4>
+        <p>Are the train and test partitions for predicting sepsis split at the patient level so that no individual patient contributes monitoring streams to both training and testing sets?</p>
+      </div>
+    </div>
+    <div class="ask-block">
+      <h4>Ask</h4>
+      <p>Are the train and test partitions for predicting sepsis split at the patient level so that no individual patient contributes monitoring streams to both training and testing sets?</p>
+    </div>
+    <p class="meta">bio_87c89b478030 · evidence L39</p>
+  </article>
+  <h3>B_legitimacy · 1</h3>
+  <article class="entry">
+    <div class="entry-head">
+      <span class="status UNKNOWN">UNKNOWN</span>
+      <span class="doc">PMC6925691</span>
+    </div>
+    <div class="pair">
+      <div>
+        <h4>Source assumption</h4>
+        <p>The source study defines the sepsis onset target label using the time of antibiotic administration by attending physicians (T0).</p>
+      </div>
+      <div>
+        <h4>Target restatement</h4>
+        <p>Do the target labels or prediction windows rely on the timing of clinician interventions such as antibiotic administration, or are they defined independently of treatment actions?</p>
+      </div>
+    </div>
+    <div class="ask-block">
+      <h4>Ask</h4>
+      <p>Were the target sepsis onset labels defined purely by physiological criteria or clinical diagnosis codes independent of the exact timestamp of antibiotic initiation?</p>
+    </div>
+    <p class="meta">PMC6925691 · evidence L29</p>
+  </article>
+  <h3>C_domain_of_validity · 1</h3>
+  <article class="entry">
+    <div class="entry-head">
+      <span class="status UNKNOWN">UNKNOWN</span>
+<span class="muted">C3</span>      <span class="doc">arx_2410.00946</span>
+    </div>
+    <div class="pair">
+      <div>
+        <h4>Source assumption</h4>
+        <p>The paper assumes a transductive setting where auxiliary factors of testing samples are known beforehand to construct the factor graph.</p>
+      </div>
+      <div>
+        <h4>Target restatement</h4>
+        <p>Are the auxiliary sociodemographic or clinical risk factors used to build the patient similarity graph completely known and available for all prospective ICU test admissions before generating sepsis predictions?</p>
+      </div>
+    </div>
+    <div class="ask-block">
+      <h4>Ask</h4>
+      <p>Are the auxiliary sociodemographic or clinical risk factors used to build the patient similarity graph completely known and available for all prospective ICU test admissions before generating sepsis predictions?</p>
+    </div>
+    <p class="meta">arx_2410.00946 · evidence L18</p>
+  </article>
+</main>
+</body>
+</html>

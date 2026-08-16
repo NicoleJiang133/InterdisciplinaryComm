@@ -7,12 +7,13 @@ What is built and what is not is also summarised in the [README](../README.md). 
 | Component | State |
 |---|---|
 | Models, ingest, retrieve, align, ledger | Built |
+| Report HTML + Markdown | Built. Fixture examples in `docs/example-report.html` |
+| CLI (`run`, `--replay`) | Built. `score` and `answer` are not |
 | Round-trip fidelity check on `target_restatement` | Not built |
 | Target-document input | Not built |
-| HTML report | Not built |
-| CLI (`run`, `score`, `--replay`, `answer`) | Not built |
-| `eval/score.py` | Not built. Recall against `data/ground_truth.csv` does not exist. |
+| `eval/score.py` | Not built. Scored ad hoc: **5 of 8** (L2 0 of 2; TB11 handed over). The number lives in `runs/conformance/results.json`. Report "N of 8", never a rate. |
 | Ground truth | 20/20 rows, 8 types, 2 rows adjudicated |
+| Conformance suite | 8 converted claims in `data/transfer_bench.jsonl`. L3.1 uncovered |
 | Negative controls | 4 found, 1 fetchable; FPR dropped |
 
 The current artefact is a question list that ends when it is generated. The product loop is four steps, of which only the first exists:
@@ -32,7 +33,7 @@ Step 2 is the split. Without it the tool stays at 9/9 UNKNOWN on a short claim, 
 
 **Diagnose D and E (G2).** Those two axes have produced zero entries on every iteration. Decide whether the question cannot reach them, or whether they should be cut. An axis that never fires is worse than no axis.
 
-**Close the evaluation loop (G3).** Write and run the scorer. Report recall with its denominator, precision with n, and the status distribution. If entries cannot be matched to ground-truth types, that mismatch is the finding. Do not report per-type recall for L2 or L3.1 (n=2 each).
+**Close the evaluation loop (G3).** Write and run the scorer against `data/transfer_bench.jsonl`. Report conformance as "N of 8", never a rate, precision with n, and the status distribution. L3.1 is uncovered (Tu, Lyu). If entries cannot be matched to expected types, that mismatch is the finding.
 
 **Generalise (G4).** Run the full pipeline on two claims outside neuroimaging and ICU. Expect degradation; the deliverable is where it breaks.
 
@@ -48,7 +49,7 @@ No accounts, no server, no database, no frontend framework, no retry loop around
 
 1. It generates questions, not verdicts.
 2. Nothing is written that cannot point at evidence. A missing label costs one row; a wrong label costs every number.
-3. Do not force axis diversity, status diversity, or recall. Those are observations. If an axis never fires, diagnose or delete it.
+3. Do not force axis diversity, status diversity, or a conformance rate. Those are observations. If an axis never fires, diagnose or delete it.
 
 ## Risks already visible
 
