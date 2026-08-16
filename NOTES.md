@@ -390,3 +390,55 @@ must omit it entirely. There is no sampling knob to turn here.
 The fix is therefore an operator override rather than a model setting: `find_sources(ctx,
 source_discipline=...)`, surfaced as `--source-discipline` in T6. Precedence is override,
 then inferred slot, then a methods-framing fallback that warns on stderr.
+
+---
+
+## 13. T4: what the map worker will and will not tell you
+
+### 13a. Only `quick-reader` is available to this account
+
+`--worker structured-extraction` looked ideal for a methods-level audit — the help calls
+it "one Claude full-paper call, a locked output schema". It is gated:
+
+```
+$ paperclip map --worker structured-extraction --from s_272cb73f ... 2>&1
+[error] Parallel map workers are currently limited to GXL testers.
+```
+
+That message goes to **stderr** with an **empty stdout** and exit 1, so it is invisible
+under the "ignore stderr" rule; `pc()` catches it only through the non-zero exit. Same
+presumably for `eligibility-screen` and `exhaustive-extraction`. `quick-reader` it is.
+
+### 13b. The axis menu order decides the ledger's axis distribution
+
+With the axes listed A, B, C, D, E and the instruction "pick the axis that fits", the
+fixture produced **10 entries, all C_domain_of_validity**, and four of them said only
+that brain images are not vital signs — true, and worthless. C is the attractor because
+the whole framing is "would this hold in a different setting", which is definitionally a
+domain question.
+
+Two edits fixed it, in this order of importance:
+
+1. Reorder the menu to A, B, D, E, C, label C "LAST RESORT", and restrict it to
+   distribution limits *the paper itself documents*.
+2. Forbid the surface observation outright: "DO NOT report that this paper studies a
+   different subject, population, or data modality than the target."
+
+Result on the same 10 papers: A_isolation 7, C_domain_of_validity 2, B_legitimacy 1,
+zero drops. The entries became concrete — quantile normalisation fitted before the
+split, ADNI's "first w/train" protocol, leave-one-subject-out, a 600/400 patient
+partition, exclusion of windows at or after first vasopressor.
+
+### 13c. Unresolved: status semantics swing with the prompt
+
+Status is not yet a stable signal. The same 10 papers gave **9 VIOLATED / 1 SATISFIED**
+under the first query and **10 SATISFIED** under the revised one. The revised prompt
+asks what condition the paper's own result rests on, so the worker reports the paper's
+good practice and marks it SATISFIED; the earlier prompt asked whether the condition
+holds in the target, so everything was VIOLATED by domain shift.
+
+Neither reading is wrong, but they answer different questions, and T7's `fpr` (fraction
+of clean controls with any VIOLATED entry) is measuring whichever one the prompt encodes.
+Deciding whether `status` describes the SOURCE paper's own validity or the TARGET's
+ability to satisfy the analogous condition is a product decision, not a prompt tweak,
+and it is still open.
