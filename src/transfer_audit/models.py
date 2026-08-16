@@ -32,6 +32,8 @@ Status = Literal["SATISFIED", "VIOLATED", "UNKNOWN", "NA"]
 class TransferContext(BaseModel):
     """The target-side description a claim is being transferred into."""
 
+    model_config = ConfigDict(extra="forbid")
+
     target_claim: str
     target_system: str
     state_variable: str | None = None

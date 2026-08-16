@@ -25,7 +25,7 @@ In scope:
 - Paperclip CLI via subprocess for all literature access
 - JSON files on disk for all state
 - One static HTML report
-- One scorpt producing three numbers
+- One script producing three numbers
 
 Out of scope — do not build these:
 - Authentication, user accounts, sessions
@@ -62,7 +62,7 @@ transfer-audit/
   assumption-ledger-v0.1.md
   pyproject.toml
   .gitignore
-.example
+  .env.example
   src/transfer_audit/
     __init__.py
     models.py      T1 — pydantic models, the data contract
@@ -93,7 +93,7 @@ TransferContext (produced by ingest.py):
   source_discipline_hint: str | None = None
 
 LedgerEntry (produced by ledger.py, drives paperclip map --output-schema):
-  modelnfigDict(extra="forbid")
+  model_config = ConfigDict(extra="forbid")
   axis: Literal["A_isolation","B_legitimacy","C_domain_of_validity",
                 "D_metric_alignment","E_evidence_quality"]
   subtype: Literal["A1","A2","A3","A4","C1","C2","C3"] | None = None
@@ -109,21 +109,37 @@ Validator: if status == "UNKNOWN" then what_would_resolve_it must be non-empty
 and at least 20 characters. This is the anti-gaming rule — see section 7.
 
 Emit the JSON Schema from the pydantic model via LedgerEntry.model_json_schema(),
-write it to data/schema/ledger_entry.json, and pass that file to
-paperclip map --output-schema. Never hand-write that schema.
+write it to data/schema/ledger_entry.json.
+
+T4 must read data/schema/ledger_entry.json off disk and pass its CONTENTS
+inline: --output-schema "$(cat data/schema/ledger_entry.json)". The flag does
+NOT accept a file path. The file is still generated from the pydantic model
+and never hand-written.
 
 Run output: every run writes runs/<timestamp>/ containing
   context.json, search.json, ledger.json, report.html
 
 Paperclip access layer, src/transfer_audit/pc.py:
 
-  def pc(*args: str, timeout: i = 300) -> dict | str
+  def pc(*args, timeout=300) -> str
+  Runs the paperclip CLI. Ignores stderr. RAISES PaperclipError if stdout
+  starts with 'ERR:' or if returncode != 0. The CLI reports real failures as
+  text on stdout while exiting 0, so returncode alone is not sufficient.
+  Returns stdout as a string. No JSON parsing — no probed command emits JSON.
 
 Runs subprocess.run(["paperclip", *args], capture_output=True, text=True,
 timeout=timeout). Ignore stderr entirely — the CLI emits a NotOpenSSLWarning
-there. If stdout parses as JSON return the dict, else return the raw string.
-Every Paperclip call in the codebase goes through pc(). No exceptions.
+there. Every Paperclip call in the codebase goes through pc(). No exceptions.
 Never pass the API key as an argument; auth comes from the ambient OAuth session.
+
+Reading results:
+Never parse the human-readable stdout of search or map. Displayed doc ids
+are truncated. Always follow a search or map with
+`paperclip results <id> --save <path>` and read that file: search saves CSV
+with full ids, map saves untruncated doc_id next to each JSON payload.
+The model will populate source_doc_id with the paper TITLE rather than its
+id. T4 must overwrite source_doc_id with the id known from the search step.
+Provenance correctness is a demo-critical property.
 
 ## 5. Tasks
 
@@ -138,7 +154,7 @@ slots. Missing slots become None, not guesses.
 Accept: runs on tests/fixtures/target_claim.txt, writes valid context.json.
 
 T3 retrieve.py — find_sources(ctx) -> list[str] doc ids. Query by schema slot,
-not kering. Fan out deliberately across sources:
+not keywording. Fan out deliberately across sources:
   paperclip search "<q>" -s arxiv -n 5
   paperclip search "<q>" -s pmc,biorxiv -n 5
 Cap total at 10 documents. Paperclip docs are explicit that map is fast only on
@@ -157,7 +173,8 @@ and evidence_lines.
 Accept: opens in a browser offline and renders the fixture ledger.
 
 T6 cli.py — typer:
-  transfer-audit run --claim-file path.txt --out runs/nsfer-audit score --ledger runs/<ts>/ledger.json
+  transfer-audit run --claim-file path.txt --out runs/<ts>
+  transfer-audit score --ledger runs/<ts>/ledger.json
   transfer-audit run --replay runs/<ts>
 Accept: run completes end to end in under 4 minutes, produces all four files.
 
@@ -177,7 +194,7 @@ marked TODO must be read off the PDF by a human. Critical path for T7.
 H2 Clean negative controls. Five papers reviewed in the same fields and found
 clean. Needed for fpr. Without these the benchmark is not credible.
 
-H3 Precision judgemenand-score 10 generated entries as meaningful or not.
+H3 Precision judgement. Judge and score 10 generated entries as meaningful or not.
 Cannot be automated in 12 hours. Say n=10 on stage.
 
 ## 7. Two rules that must not be violated
@@ -199,7 +216,7 @@ The only path that must work flawlessly. Pre-compute everything else.
 1. Paste a real target claim from the team's domain scientist
 2. transfer-audit run — under 4 minutes, live
 3. Report opens: five axes, mixed statuses, every claim traceable to a doc id
-4. Point at one VIOLATED entry — this he finding
+4. Point at one VIOLATED entry — this is the finding
 5. transfer-audit score — the three numbers, shown from file
 
 Build the --replay flag early, not at 10am on Sunday.

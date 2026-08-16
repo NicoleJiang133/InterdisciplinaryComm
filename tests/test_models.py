@@ -53,6 +53,16 @@ def test_unknown_with_specific_resolution_parses():
     assert entry.status == "UNKNOWN"
 
 
+def test_transfer_context_rejects_extra_field():
+    with pytest.raises(ValidationError) as exc:
+        TransferContext(
+            target_claim="Connectivity features predict sepsis onset.",
+            target_system="ICU vital-sign monitoring",
+            confidence=0.9,
+        )
+    assert "confidence" in str(exc.value)
+
+
 def test_minimal_transfer_context_parses():
     ctx = TransferContext(
         target_claim="Connectivity features predict sepsis onset.",
