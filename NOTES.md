@@ -305,3 +305,31 @@ fails in the one shape that a stdout-only error check cannot see. The unit tests
 hermetic — `subprocess` is monkeypatched for `pc()` and a stub client replaces
 Anthropic — so only the two `@pytest.mark.integration` tests need credentials, network,
 and an unrestricted home.
+
+## 10. How data/ground_truth.csv was labelled
+
+All 20 rows carry leakage-type labels read directly off Table 1 (`\label{table:survey}`)
+in the LaTeX source of arXiv:2207.07048, fetched from `https://arxiv.org/src/2207.07048`.
+The table is real `tabular` markup there, not an image, so no value was inferred from a
+rendered PDF or from prose. Each row's `evidence` column holds the exact LaTeX table row
+it came from. Column order is fixed by the header at main.tex line 129: cells 5-12 are
+L1.1, L1.2, L1.3, L1.4, L2, L3.1, L3.2, L3.3, and a `$\circ$` marks the type.
+
+**Rows 3 and 14 were adjudicated against an earlier prose-derived label.** Both were
+originally filled by a human reading section 2.4, then re-checked against the table:
+
+| row | paper | prose label | table label | outcome |
+|-----|-------|-------------|-------------|---------|
+| 3 | Bone et al. 2015 | `L3.3` | `L1.4;L3.3` | prose reading was incomplete; table taken |
+| 14 | Vandewiele et al. 2021 | `L1.2` | `L1.3;L3.2;L3.3` | direct contradiction; table taken, L1.2 dropped |
+
+Both now carry `annotation_source=table1, confidence=high`. Rows 4, 12, 17 and 18 were
+checked the same way and agree with the table; they keep `annotation_source=section2.4`
+and their original confidence, with the table evidence backfilled. Row 20 previously
+held the placeholder `MULTIPLE`, which is not a legal value, and was filled from the
+table.
+
+Coverage across the 20 rows is 32 annotations, and all eight types appear. L2
+(illegitimate features) and L3.1 (temporal leakage) appear in only two rows each, so
+per-type recall on those two will be extremely noisy — quote whole-benchmark recall with
+its denominator rather than per-type recall for them.
