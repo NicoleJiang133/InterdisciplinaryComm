@@ -155,12 +155,33 @@ T2 ingest.py — build_context(text) -> TransferContext. One call that fills the
 slots. Missing slots become None, not guesses.
 Accept: runs on tests/fixtures/target_claim.txt, writes valid context.json.
 
-T3 retrieve.py — find_sources(ctx) -> list[str] doc ids. Query by schema slot,
-not keywording. Fan out deliberately across sources:
-  paperclip search "<q>" -s arxiv -n 5
-  paperclip search "<q>" -s pmc,biorxiv -n 5
+T3 retrieve.py — find_sources(ctx, source_discipline=None) -> list[str] doc ids.
+Query by schema slot, not keywording.
+
+Fan out by ROLE, not by venue. Splitting one query across two source flags was
+tried and rejected: it returns the same discipline from different journals, so
+the audit only ever sees the target half of the transfer. See NOTES.md section
+11 for the probe. The two legs ask different questions:
+
+  source leg — queries source_discipline_hint for the validity conditions of the
+  field the result was borrowed FROM:
+    paperclip search "<discipline>: validity conditions and cohort generalisation
+    required when a trained model is applied to a new population" -s arxiv -n 5
+
+  target leg — queries the target slots (state_variable, target_system, readout,
+  perturbation, constraints) for the literature the claim is applied TO:
+    paperclip search "<target slots>" -s pmc,biorxiv -n 5
+
+source_discipline_hint is load-bearing for this and the extractor infers it only
+~4 runs in 5 (NOTES.md section 12), so it is operator-overridable: find_sources
+takes source_discipline=, and T6 exposes --source-discipline. Precedence is
+override, then the inferred slot. With neither, the source leg falls back to a
+methods framing of the target slots and warns loudly on stderr — that run still
+returns two sources but is topically narrower, and the operator should know.
+
 Cap total at 10 documents. Paperclip docs are explicit that map is fast only on
-3-10 papers. Do not raise this cap; it will make the demo time out.
+3-10 papers. Do not raise this cap; it will make the demo time out. Merge the
+legs round-robin so hitting the cap cannot drop a whole discipline.
 Accept: returns 3-10 doc ids from at least two distinct sources.
 
 T4 ledger.py — build_ledger(ctx, doc_ids) -> list[LedgerEntry].
@@ -176,6 +197,7 @@ Accept: opens in a browser offline and renders the fixture ledger.
 
 T6 cli.py — typer:
   transfer-audit run --claim-file path.txt --out runs/<ts>
+    [--source-discipline "neuroimaging"]   pins the T3 source leg
   transfer-audit score --ledger runs/<ts>/ledger.json
   transfer-audit run --replay runs/<ts>
 Accept: run completes end to end in under 4 minutes, produces all four files.

@@ -333,3 +333,60 @@ Coverage across the 20 rows is 32 annotations, and all eight types appear. L2
 (illegitimate features) and L3.1 (temporal leakage) appear in only two rows each, so
 per-type recall on those two will be extremely noisy — quote whole-benchmark recall with
 its denominator rather than per-type recall for them.
+
+---
+
+## 11. Query shape for T3: which slots make the fan-out cross-disciplinary
+
+Probed four query shapes against the live corpus before writing `retrieve.py`.
+
+A query built only from the *target* slots (`predicting development of sepsis in ICU
+patients from continuous vital-sign monitoring streams`) returns the same cluster of ICU
+sepsis papers on `-s arxiv` as on `-s pmc,biorxiv` — the fan-out changes the venue but
+not the discipline. Dressing that query up in methodological language ("assumptions
+required for the validation to transfer") did not change the mix, and `--ranking
+analogical` returned the same papers reordered while taking roughly 6x as long, so the
+default hybrid ranking is used.
+
+What does move the result set is querying the `source_discipline_hint` slot on its own
+leg. `neuroimaging: validity conditions and cohort generalisation required when a
+trained model is applied to a new population` on `-s arxiv` returns neuroimaging
+generalisation papers, which is the half of the transfer the target-side query cannot
+reach. So the two legs are split by *role*, not just by venue: source-discipline query
+to arxiv, target-system query to pmc,biorxiv. When `source_discipline_hint` is null the
+arxiv leg falls back to a methods framing of the target slots, which still spans two
+sources but is topically narrower — one more reason that slot's instability (section 8)
+matters.
+
+---
+
+## 12. `source_discipline_hint` is unstable and temperature cannot fix it
+
+The T3 source leg is only as good as `source_discipline_hint`, so the slot was measured
+over five consecutive `build_context()` runs on the same fixture:
+
+```
+run 1  hint= None
+run 2  hint= 'neuroimaging'
+run 3  hint= 'neuroimaging'
+run 4  hint= 'neuroimaging'
+run 5  hint= 'neuroimaging'
+```
+
+Four in five. Every other slot was identical across all five runs, so this is specific
+to the one slot whose extraction requires an inference — the fixture never names a
+field, it describes an fMRI study, and "is that a discipline name?" is a judgement call
+the prompt deliberately biases toward null.
+
+**Setting `temperature=0` is not available.** The obvious fix fails at the API:
+
+```
+anthropic.BadRequestError: Error code: 400 - `temperature` is deprecated for this model.
+```
+
+`claude-sonnet-5` rejects the parameter outright rather than ignoring it, so the call
+must omit it entirely. There is no sampling knob to turn here.
+
+The fix is therefore an operator override rather than a model setting: `find_sources(ctx,
+source_discipline=...)`, surfaced as `--source-discipline` in T6. Precedence is override,
+then inferred slot, then a methods-framing fallback that warns on stderr.

@@ -25,6 +25,9 @@ from transfer_audit.models import TransferContext
 
 DEFAULT_MODEL = "claude-sonnet-5"
 MAX_TOKENS = 2000
+# No temperature knob: claude-sonnet-5 rejects the parameter outright with
+# "400 `temperature` is deprecated for this model" (NOTES.md section 12). Run-to-run
+# stability has to come from the operator override, not from sampling settings.
 
 _SYSTEM_PROMPT = """\
 You extract structured slots from a scientific claim that someone is transferring from \
