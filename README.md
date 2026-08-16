@@ -16,6 +16,26 @@ That is how the 70% version of a borrowed result actually fails. The source cond
 
 It generates questions, not verdicts. The source literature already showed these errors cannot be caught by reading papers. UNKNOWN with a specific, answerable question is a success state.
 
+## Architecture
+
+`src/transfer_audit/cli.py` is the entry point. `run --claim-file` executes ingest → retrieve → align → ledger → report into a run directory; `run --replay` re-renders both reports from a saved run and does not call Paperclip or Anthropic. `src/transfer_audit/pc.py` is the Paperclip transport: every Paperclip call goes through `pc()`, which runs `subprocess.run(["paperclip", *args])`.
+
+**The pipeline.** `src/transfer_audit/ingest.py` reads the claim file, fills a `TransferContext` via the Anthropic API, and writes `context.json`. `src/transfer_audit/retrieve.py` takes that context, runs two slot-derived `paperclip search` legs, and writes `search.json`. `src/transfer_audit/align.py` takes the context and the retrieval, extracts seven structural slots per paper with `paperclip map`, admits papers with `extraction_quality >= 1`, and writes `alignment.json`. `src/transfer_audit/ledger.py` maps `admitted_ids` into `LedgerEntry` objects and writes `ledger.json`. `src/transfer_audit/report.py` takes the ledger, alignment, and context and writes `report.html` and `report.md`.
+
+| Stage | Module | Writes |
+|---|---|---|
+| ingest | `src/transfer_audit/ingest.py` | `context.json` |
+| retrieve | `src/transfer_audit/retrieve.py` | `search.json` |
+| align | `src/transfer_audit/align.py` | `alignment.json` |
+| ledger | `src/transfer_audit/ledger.py` | `ledger.json` |
+| report | `src/transfer_audit/report.py` | `report.html`, `report.md` |
+
+**The data contract.** `TransferContext` and `LedgerEntry` are pydantic v2 models in `src/transfer_audit/models.py` with `extra="forbid"`. `data/schema/ledger_entry.json` is generated from `LedgerEntry.model_json_schema()` and its contents are passed inline to `paperclip map --output-schema` — never a path. Status `UNKNOWN` is valid only when `what_would_resolve_it` is at least 20 characters.
+
+**Tools.** Paperclip (GXL) does literature retrieval and per-paper extraction, via the CLI through subprocess. The Python SDK is not on PyPI and is not importable. The Anthropic API is used for claim ingestion only: Paperclip has no general LLM endpoint, and `map` runs over papers, not arbitrary text, which is why the two are split. pydantic validates the schema, typer is the CLI, jinja2 renders the templates, pytest runs the tests. TransferBench is specified as a BenchFlow-compatible environment in [docs/08-transferbench.md](docs/08-transferbench.md). It is not ported to their runtime. The Markdown report is the handoff format for a Sundial human-agent editor. There is no integration with their unreleased system of record.
+
+**What is not built.** `eval/score.py`, the round-trip fidelity check, target-document input, and the `answer` loop are not in this repository. See [docs/06-roadmap.md](docs/06-roadmap.md).
+
 ## Status
 
 | Stage | State |
