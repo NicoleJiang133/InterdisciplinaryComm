@@ -1,0 +1,74 @@
+# Architecture
+
+The pipeline is four built stages and several that are specified but not built. The argument that makes `target_restatement` the load-bearing field is in [01-thesis.md](01-thesis.md). Paperclip CLI constraints that shaped the seams are in [07-implementation-notes.md](07-implementation-notes.md).
+
+```
+claim text
+    → ingest     TransferContext (seven slots)
+    → retrieve   source papers, role-split across disciplines
+    → align      structural slot comparison; gates the ledger
+    → ledger     one LedgerEntry per admitted paper
+    → report     not built
+```
+
+Literature access is the `paperclip` CLI via subprocess. The one thing Paperclip cannot do is run a model over arbitrary user text, so ingest is the only stage that calls the Anthropic API. Everything that reads papers stays in Paperclip.
+
+## Ingest
+
+`build_context(text) -> TransferContext`
+
+Fills `target_claim`, `target_system`, `state_variable`, `perturbation`, `readout`, `constraints`, `source_discipline_hint`. `failure_mode` and `isolation_unit` are alignment slots: a short claim almost never states them, and leaving them null is a finding.
+
+Slots the text does not state come back null. Inventing a slot is worse than leaving it empty, because retrieve queries the corpus by slot and align compares by slot.
+
+`source_discipline_hint` is inferred only about four runs in five on the fixture, and `claude-sonnet-5` rejects a `temperature` parameter. The slot is therefore operator-overridable (`source_discipline=`). That is demo safety, not a claim that the extractor is stable.
+
+## Retrieve
+
+`find_sources(ctx) -> list[str]`
+
+Two search legs, split by **role**, not by venue. Searching one query against `arxiv` and against `pmc,biorxiv` returns the same discipline from different journals. The audit then only ever sees the target half of the transfer.
+
+- Source leg: queries `source_discipline_hint` for validity conditions and external-cohort evaluation, on `arxiv`.
+- Target leg: queries the target slots, on `pmc,biorxiv`.
+
+Cap 10 documents, merged round-robin. Doc ids are read from `paperclip results <s_id> --save` CSVs, never from stdout, where they are truncated. `paperclip filter` is not used: it rewrites the stored result set in place and would break replay.
+
+A doc-id denylist exists as an escape hatch. It is not the mechanism that holds out weak papers; that is align.
+
+## Align
+
+`score_alignment(ctx, retrieval) -> AlignmentReport`
+
+Built. This is the missing step that retrieve-then-ledger did not have.
+
+Each retrieved paper is mapped for seven slots (system, state_variable, perturbation, readout, constraints, failure_mode, isolation_unit). Comparison against the target context is deterministic:
+
+- **mapped** — paper instantiates the slot and the target has a counterpart. A precise restatement is possible.
+- **unmapped** — paper instantiates the slot and the target is silent. Reported as a break point. This is where the 70% reading drops the 30%.
+- **absent** — the paper does not instantiate the slot. Ignored in the score.
+
+Gate: fewer than 3 mapped slots → held out of the ledger. At least 3 mapped but unmapped ≥ mapped → admitted and flagged weak. Held-out papers stay in `alignment.json`.
+
+On the fixture, with the denylist empty, the two metaphor papers (`arx_2204.07005`, `arx_2509.07237`) scored mapped=0 and were held out. That is one run, one fixture.
+
+The round-trip fidelity check (take `target_restatement` alone, recover the source condition, mark `fidelity: high | degraded`) is **not built**.
+
+## Ledger
+
+`build_ledger(ctx, doc_ids, search_ids) -> list[LedgerEntry]`
+
+One `paperclip map` per search id, schema passed as file contents inline, never as a path, never with `--json`. Each entry is validated against `LedgerEntry`; invalid rows are dropped and counted. No retry loop.
+
+`source_doc_id` is overwritten with the id known from retrieve. The map worker fills it with the paper title.
+
+Status is about the target. On the two-sentence fixture the ledger is 9/9 UNKNOWN, which is the correct answer given that input. Resolving those entries to SATISFIED or VIOLATED needs a target document the claim does not contain. That path is not built ([06-roadmap.md](06-roadmap.md)).
+
+## Not built
+
+- HTML report
+- CLI (`run`, `score`, `--replay`)
+- `eval/score.py` — recall against `data/ground_truth.csv` has never been computed
+- Target-document ingest (protocol / preregistration / README)
+- Round-trip fidelity field
+- Answer loop that lets a scientist edit a restatement and persist the correction

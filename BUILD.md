@@ -2,8 +2,10 @@
 
 Agent-facing build spec. Read this fully before writing any code.
 
-Companion documents:
-- `assumption-ledger-v0.1.md` — domain rationale. Reference only. Do not implement its prose.
+Companion documents (human-facing, start at `README.md`):
+- `docs/01-thesis.md` — product thesis. `target_restatement` is load-bearing.
+- `docs/02-assumption-ledger.md` — domain rationale. Reference only. Do not implement its prose.
+- `docs/07-implementation-notes.md` — probed Paperclip CLI behaviour.
 - `data/ground_truth.csv` — benchmark labels. Human-curated. Never generate or edit this file.
 
 ## 0. What this is
@@ -75,8 +77,10 @@ No other dependencies without justification.
 transfer-audit/
   README.md
   BUILD.md
-  NOTES.md
-  assumption-ledger-v0.1.md
+  docs/              human-facing argument; start at 01-thesis.md
+  NOTES.md           stub → docs/07-implementation-notes.md
+  ROADMAP.md         stub → docs/06-roadmap.md
+  assumption-ledger-v0.1.md  stub → docs/02-assumption-ledger.md
   pyproject.toml
   .gitignore
   .env.example
