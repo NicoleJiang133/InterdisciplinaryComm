@@ -40,15 +40,19 @@ It generates questions, not verdicts. The source literature already showed these
 
 | Stage | State |
 |---|---|
+| Front-end | Built. `transfer-audit serve` opens http://localhost:8000 after `pip install -e ".[web]"`. Live runs need Paperclip and `ANTHROPIC_API_KEY`; if either fails, a saved fixture is shown and labelled as saved. |
+| `docs/demo.html` | Built. Replays saved runs with no network call. Open the file from disk. |
 | Ingest, retrieve, align, ledger | Built. The alignment gate removes extraction failures (no slots recovered from the paper), not weak analogies. Unmapped slots are aggregated as break points ([architecture](docs/03-architecture.md)). |
 | Report HTML + Markdown | Built. Worked example, break-point table with n in every cell, ledger grouped by axis. Committed fixture: [example-report.html](docs/example-report.html), [example-report.md](docs/example-report.md) (9/9 UNKNOWN). |
-| CLI | `run --claim-file` and `run --replay` built. `--replay` re-renders both reports with no network call. `score` and `answer` are not built. |
+| CLI | `run --claim-file`, `run --replay`, and `serve` built. `--replay` re-renders both reports with no network call. `score` and `answer` are not built. |
 | Conformance | **5 of 8** on `data/transfer_bench.jsonl`. L2 is 0 of 2. One of the five hits (TB11) was handed over by the claim text. Status: 62 UNKNOWN / 0 SATISFIED / 0 VIOLATED. Report "N of 8", never a rate. L3.1 uncovered. [TransferBench](docs/08-transferbench.md). Scored ad hoc; `eval/score.py` is not in the repo. The number lives in `runs/conformance/results.json`. |
 | Round-trip fidelity check | Not built. That is a separate stage from the alignment gate. |
 | Target-document input | Not built. A two-sentence claim produces 9/9 UNKNOWN, which is the correct answer given that input. |
 
 ## Documents
 
+- [Front-end](web/index.html) — `pip install -e ".[web]"` then `transfer-audit serve`. Enter a claim; the pipeline stages render as they complete.
+- [demo.html](docs/demo.html) — static walkthrough of saved runs, opens offline, no server
 - [Thesis](docs/01-thesis.md) — review capacity is the bottleneck; fidelity is the mechanism
 - [Assumption ledger](docs/02-assumption-ledger.md) — five axes from the 8-type leakage taxonomy
 - [Architecture](docs/03-architecture.md) — ingest → retrieve → align → ledger → report
@@ -67,11 +71,14 @@ Requires Python 3.12 or later. `python3 --version` must report 3.12+. If it does
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]"
+.venv/bin/pip install -e ".[dev,web]"
 cp .env.example .env
 # set ANTHROPIC_API_KEY in .env
 # paperclip must already be installed and authenticated on this machine
 .venv/bin/pytest -m "not integration"
+
+# Local product UI
+.venv/bin/transfer-audit serve
 
 # Offline: re-render HTML + Markdown from a saved run (no network)
 .venv/bin/transfer-audit run --replay runs/<ts>

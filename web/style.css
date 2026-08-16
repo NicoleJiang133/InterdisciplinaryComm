@@ -1,0 +1,125 @@
+:root {
+  --text: #1a1a1a;
+  --muted: #5c5c5c;
+  --rule: #d6d6d6;
+  --bg: #fafafa;
+  --card: #ffffff;
+  --ask: #111111;
+  --satisfied: #1b7f4e;
+  --violated: #b42318;
+  --unknown: #9a6700;
+  --na: #667085;
+  --on: #111111;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 18px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 36px 28px 96px;
+}
+h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 6px; }
+h2 { font-size: 22px; font-weight: 600; margin: 0 0 12px; }
+h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; }
+p { margin: 0 0 12px; }
+.muted { color: var(--muted); font-size: 14px; }
+.kicker {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 20px 0 8px;
+}
+button, input, textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--rule);
+}
+button {
+  padding: 10px 14px;
+  text-align: left;
+  cursor: pointer;
+}
+button:focus, input:focus, textarea:focus {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+button.on {
+  border-color: var(--on);
+  box-shadow: inset 0 0 0 1px var(--on);
+}
+button:disabled { cursor: default; opacity: 0.55; }
+.mode { display: flex; gap: 8px; margin: 20px 0 8px; }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 16px; }
+#claim, #discipline { width: 100%; padding: 12px 14px; }
+#claim { font-size: 20px; line-height: 1.4; resize: vertical; }
+#submit {
+  margin-top: 16px;
+  font-size: 20px;
+  font-weight: 600;
+  padding: 14px 18px;
+}
+#banner {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 20px 0;
+  margin: 28px 0 8px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+#banner .why { display: block; font-size: 16px; font-weight: 400; color: var(--muted); margin-top: 8px; }
+.stage {
+  border-top: 1px solid var(--rule);
+  padding: 20px 0 8px;
+  margin-top: 8px;
+}
+.stage-head { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+.stage-head .name { font-size: 22px; font-weight: 600; }
+.stage-head .time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.slot { padding: 10px 0; border-top: 1px solid var(--rule); }
+.slot .name { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.slot .val { font-size: 24px; font-weight: 600; line-height: 1.25; letter-spacing: -0.02em; }
+.slot .val.null { color: var(--muted); font-weight: 400; font-size: 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 12px 0; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.doc { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+.status {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.status.SATISFIED, .status.in_discipline { color: var(--satisfied); }
+.status.VIOLATED, .status.generic { color: var(--violated); }
+.status.UNKNOWN { color: var(--unknown); }
+.status.NA, .status.unclassified { color: var(--na); }
+.entry { border-top: 1px solid var(--rule); padding: 18px 0; }
+.entry-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+.pair h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.pair p { margin: 0; font-size: 16px; }
+.pair textarea {
+  width: 100%;
+  min-height: 8em;
+  padding: 8px 10px;
+  font-size: 16px;
+  line-height: 1.4;
+  resize: vertical;
+}
+.hint { font-size: 15px; margin: 8px 0 16px; }
+.report-link { font-size: 22px; font-weight: 600; }
+@media (max-width: 720px) {
+  .pair { grid-template-columns: 1fr; }
+  .slot .val { font-size: 20px; }
+}

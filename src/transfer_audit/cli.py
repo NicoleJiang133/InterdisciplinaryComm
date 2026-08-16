@@ -1,8 +1,8 @@
 """T6 — typer entry point.
 
-Two operations only: a live `run --claim-file` and an offline `run --replay`.
-`--replay` is the demo safety net. It re-renders HTML and Markdown from a saved
-run and must not call Paperclip or Anthropic. `score` and `answer` are not built.
+Live `run --claim-file`, offline `run --replay`, and `serve` for the local UI.
+`--replay` re-renders HTML and Markdown from a saved run and must not call
+Paperclip or Anthropic. `score` and `answer` are not built.
 """
 
 from __future__ import annotations
@@ -146,6 +146,45 @@ def run(
     dest = execute_run(claim_file, out or default_out(), source_discipline=source_discipline)
     typer.echo(f"wrote {dest / 'report.html'}")
     typer.echo(f"wrote {dest / 'report.md'}")
+
+
+@app.command()
+def serve(
+    host: str = typer.Option("127.0.0.1", help="Bind address. Localhost only."),
+    port: int = typer.Option(8000, help="Port."),
+    open_browser: bool = typer.Option(True, "--open/--no-open"),
+) -> None:
+    """Open the local product UI at http://localhost:8000."""
+    import os
+
+    try:
+        import uvicorn
+    except ImportError:
+        typer.echo("install the web extra: pip install -e '.[web]'", err=True)
+        raise typer.Exit(code=1)
+    if host not in {"127.0.0.1", "localhost"}:
+        typer.echo("bind to 127.0.0.1 only", err=True)
+        raise typer.Exit(code=2)
+
+    from transfer_audit.models import REPO_ROOT
+
+    os.chdir(REPO_ROOT)
+    env_path = REPO_ROOT / ".env"
+    if env_path.is_file():
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            os.environ.setdefault(key.strip(), value.strip().strip("'").strip('"'))
+
+    url = f"http://{host}:{port}"
+    if open_browser:
+        import webbrowser
+
+        webbrowser.open(url)
+    typer.echo(url)
+    uvicorn.run("transfer_audit.server:app", host=host, port=port, log_level="info")
 
 
 if __name__ == "__main__":

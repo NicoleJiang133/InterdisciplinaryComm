@@ -60,6 +60,7 @@ def test_help_lists_run_not_score():
     result = CliRunner().invoke(app, ["--help"])
     assert result.exit_code == 0, result.output
     assert "run" in result.output
+    assert "serve" in result.output
     assert "score" not in result.output.lower()
     assert "answer" not in result.output.lower()
 

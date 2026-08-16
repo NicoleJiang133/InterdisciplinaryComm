@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
+web = ["fastapi", "uvicorn", "httpx"]
 
 [project.scripts]
 transfer-audit = "transfer_audit.cli:app"

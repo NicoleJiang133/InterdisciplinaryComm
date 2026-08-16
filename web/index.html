@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assumption ledger</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <h1>Assumption ledger</h1>
+  <p class="muted">Borrow a result. See the conditions it carries. Correct the translation if it is wrong.</p>
+
+  <div class="mode" role="group" aria-label="Live or saved">
+    <button type="button" id="mode-live" class="on">Live</button>
+    <button type="button" id="mode-saved">Saved</button>
+  </div>
+  <p class="muted" id="mode-note">Live calls Paperclip and Anthropic. Saved replays the committed ICU fixture and says so.</p>
+
+  <label class="kicker" for="claim">The claim</label>
+  <textarea id="claim" rows="5">A random-forest classifier trained on resting-state fMRI connectivity matrices predicts conversion to Alzheimer's disease with 92% accuracy, so the same connectivity-based approach should predict which ICU patients will develop sepsis from their continuous vital-sign monitoring streams.</textarea>
+  <div class="examples">
+    <button type="button" data-example="icu">ICU fixture</button>
+    <button type="button" data-example="kuramoto">Kuramoto → meadow</button>
+    <button type="button" data-example="foraging">Foraging → ribosome</button>
+  </div>
+
+  <label class="kicker" for="discipline">Source discipline <span class="muted">(optional)</span></label>
+  <input id="discipline" type="text" placeholder="neuroimaging">
+  <p class="muted">Pins the source-leg search to that field's objects, so the query does not drift into a generic methods cluster.</p>
+
+  <button type="button" id="submit">Run</button>
+
+  <div id="banner" hidden></div>
+  <div id="stages"></div>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>
