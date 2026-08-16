@@ -41,6 +41,8 @@ class TransferContext(BaseModel):
     readout: str | None = None
     constraints: list[str] = []
     source_discipline_hint: str | None = None
+    failure_mode: str | None = None
+    isolation_unit: str | None = None
 
 
 class LedgerEntry(BaseModel):
@@ -71,6 +73,73 @@ class LedgerEntry(BaseModel):
                 "measurement, or record that would settle it"
             )
         return self
+
+
+ALIGNMENT_SLOTS = (
+    "system",
+    "state_variable",
+    "perturbation",
+    "readout",
+    "constraints",
+    "failure_mode",
+    "isolation_unit",
+)
+SlotName = Literal[
+    "system",
+    "state_variable",
+    "perturbation",
+    "readout",
+    "constraints",
+    "failure_mode",
+    "isolation_unit",
+]
+SlotJudgement = Literal["mapped", "unmapped", "absent"]
+
+
+class SlotAlignment(BaseModel):
+    """One structural slot compared between a source paper and the target."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    slot: SlotName
+    judgement: SlotJudgement
+    paper_value: str | None = None
+    target_value: str | None = None
+    note: str | None = None
+
+
+class PaperAlignment(BaseModel):
+    """How much of a source paper's structure has a counterpart in the target."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    doc_id: str
+    title: str = ""
+    slots: list[SlotAlignment]
+    mapped: int
+    unmapped: int
+    score: float
+    admitted: bool
+    weak: bool = False
+
+    @property
+    def break_points(self) -> list[SlotAlignment]:
+        return [slot for slot in self.slots if slot.judgement == "unmapped"]
+
+
+class AlignmentReport(BaseModel):
+    """T3 documents scored against the target; T4 sees only `admitted_ids`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    papers: list[PaperAlignment]
+    admitted_ids: list[str]
+    held_out_ids: list[str]
+    threshold_mapped: int
+
+    @property
+    def weak_ids(self) -> list[str]:
+        return [paper.doc_id for paper in self.papers if paper.admitted and paper.weak]
 
 
 def emit_schema(path: Path = SCHEMA_PATH) -> Path:

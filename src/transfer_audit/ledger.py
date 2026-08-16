@@ -151,12 +151,12 @@ def load_schema_text(path: Path = SCHEMA_PATH) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _parse_map_id(stdout: str) -> str | None:
+def parse_map_id(stdout: str) -> str | None:
     found = _MAP_ID.search(stdout)
     return found.group(0) if found else None
 
 
-def _parse_blocks(text: str) -> list[tuple[str, str]]:
+def parse_map_blocks(text: str) -> list[tuple[str, str]]:
     """(doc_id, payload) per paper from a `results --save` export."""
     blocks: list[tuple[str, list[str]]] = []
     doc_id = ""
@@ -177,7 +177,7 @@ def _parse_blocks(text: str) -> list[tuple[str, str]]:
     return [(doc, "\n".join(lines).strip()) for doc, lines in blocks]
 
 
-def _payload_json(payload: str) -> dict | None:
+def payload_json(payload: str) -> dict | None:
     start, end = payload.find("{"), payload.rfind("}")
     if start == -1 or end <= start:
         return None
@@ -223,7 +223,7 @@ def run_map(
             query,
             timeout=MAP_TIMEOUT,
         )
-        map_id = _parse_map_id(stdout)
+        map_id = parse_map_id(stdout)
         if not map_id:
             drops.append(Drop(doc_id=search_id, reason="map returned no results id"))
             continue
@@ -235,14 +235,14 @@ def run_map(
             drops.append(Drop(doc_id=map_id, reason="results --save wrote nothing"))
             continue
 
-        for doc_id, payload in _parse_blocks(export.read_text(encoding="utf-8")):
+        for doc_id, payload in parse_map_blocks(export.read_text(encoding="utf-8")):
             if not doc_id or doc_id in seen:
                 continue
             if allowed and doc_id not in allowed:
                 continue  # trimmed by the T3 dedupe or cap; not an error
             seen.add(doc_id)
 
-            parsed = _payload_json(payload)
+            parsed = payload_json(payload)
             if parsed is None:
                 drops.append(Drop(doc_id=doc_id, reason="no JSON object in map output"))
                 continue

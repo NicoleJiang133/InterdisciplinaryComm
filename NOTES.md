@@ -491,3 +491,34 @@ defined by antibiotic administration time (B_legitimacy, PMC6925691) and a trans
 assumption requiring auxiliary factors to be known for test subjects in advance
 (C_domain_of_validity, arx_2410.00946). Both are specific enough that a reviewer could
 act on them.
+
+---
+
+## 14. M2: alignment is a gate, not a similarity score
+
+The two metaphor papers (arx_2204.07005, arx_2509.07237) were previously removed by
+`DEFAULT_DENY`. That was human pruning. M2 replaces it with a structural test.
+
+Each paper is mapped for seven slots (system, state_variable, perturbation, readout,
+constraints, failure_mode, isolation_unit). Comparison against the target context is
+deterministic: a slot the paper instantiates and the target also states is `mapped`;
+a slot the paper instantiates and the target is silent on is `unmapped` (the break
+point); a slot the paper does not instantiate is `absent` and ignored. Gate is
+`mapped >= 3`. Values do not have to match — "ADNI memory clinic" maps to "ICU
+patients" as a *system* counterpart.
+
+Live run on the fixture, denylist empty, metaphor papers force-included:
+
+```
+HOLD  arx_2204.07005  mapped=0  (interpretability review: every slot null)
+HOLD  arx_2509.07237  mapped=0  (normative-modelling guide: every slot null)
+ADMIT 8 papers with mapped=3
+WEAK  3 papers (unmapped >= mapped): isolation_unit, constraints, sometimes failure_mode
+```
+
+The held-out papers are not "off topic". They are papers from which quick-reader
+could extract no study structure at all — which is exactly why their T4 entries
+collapsed to metaphors. The most common unmapped slots on admitted papers are
+`isolation_unit` and `constraints`: every prediction paper states how it splits and
+who it includes; the two-sentence target states neither. That is the 70%/30% gap
+in machine-readable form.

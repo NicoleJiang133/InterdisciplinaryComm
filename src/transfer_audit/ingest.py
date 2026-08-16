@@ -48,6 +48,10 @@ Field meanings:
 FROM, a few words at most, such as "neuroimaging" or "labour economics". A description \
 of the source study, its method or its result is NOT a discipline name — if the input \
 does not name a field, this is null.
+- failure_mode: how the target system fails, if the input states it (a missed \
+onset, a false alarm, a wrong conversion). Do not copy state_variable here.
+- isolation_unit: the unit that must not cross a train/test boundary, if the \
+input states it (patient, admission, site, scan). A short claim almost never does.
 
 Rules:
 - Use null for any slot the input does not state. Use [] for empty constraints.

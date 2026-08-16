@@ -73,3 +73,5 @@ def test_minimal_transfer_context_parses():
     assert ctx.readout is None
     assert ctx.constraints == []
     assert ctx.source_discipline_hint is None
+    assert ctx.failure_mode is None
+    assert ctx.isolation_unit is None

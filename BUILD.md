@@ -12,8 +12,23 @@ A CLI that takes a scientific claim borrowed from another discipline and emits a
 assumption ledger: a structured audit of whether the source result's validity
 conditions still hold in the target system.
 
-It does NOT detect errors. It GENERATES THE QUESTIONS that would surface them.
-This distinction is load-bearing — see section 7.
+Product thesis. The failure mode is not incomprehension. A competent scientist
+understands a borrowed result to about 70%, and the missing 30% is invisible to
+them. They then act on the approximation. The source condition "the test set
+must be drawn from the distribution of scientific interest" is stored as "use a
+held-out test set"; every one of the 329 Kapoor & Narayanan papers is compliant
+with the 70% version and in violation of the real one.
+
+TRANSLATION FIDELITY IS NOT AN AID TO THE AUDIT. IT IS THE MECHANISM OF THE
+AUDIT. If you can state the source's condition precisely in the target's own
+language, you can check it. If you can only state it approximately, you cannot.
+target_restatement is therefore the load-bearing field. status is a consequence
+of it. Unmapped structural slots — places where the source condition has no
+counterpart in the target — are not a tool failure; they are where the transfer
+is most likely to break, and they must be reported to the scientist.
+
+It does NOT detect errors. It GENERATES THE QUESTIONS that would surface them,
+and it reports where a precise question cannot be formed. See section 7.
 
 Hackathon deliverable, ~12 working hours, 2-3 people. Optimise for a working demo
 and one benchmark number. Nothing else.
@@ -71,6 +86,7 @@ transfer-audit/
     pc.py          Paperclip subprocess layer
     ingest.py      T2 — target description -> TransferContext
     retrieve.py    T3 — Paperclip search, cross-source
+    align.py       M2 — structural slot alignment, gates T4
     ledger.py      T4 — Paperclip map -> LedgerEntry[]
     report.py      T5 — Ledger -> HTML
     cli.py         T6 — typer entry point
@@ -93,6 +109,12 @@ TransferContext (produced by ingest.py):
   readout: str | None
   constraints: list[str] = []
   source_discipline_hint: str | None = None
+  failure_mode: str | None = None
+  isolation_unit: str | None = None
+
+The last two are alignment slots, not claim-extraction slots. A short claim
+almost never states them; a protocol often does. Leaving them null is correct
+and is itself a finding: the target has no stated counterpart for that slot.
 
 LedgerEntry (produced by ledger.py, drives paperclip map --output-schema):
   model_config = ConfigDict(extra="forbid")
@@ -137,7 +159,7 @@ NOT accept a file path. The file is still generated from the pydantic model
 and never hand-written.
 
 Run output: every run writes runs/<timestamp>/ containing
-  context.json, search.json, ledger.json, report.html
+  context.json, search.json, alignment.json, ledger.json, report.html
 
 Paperclip access layer, src/transfer_audit/pc.py:
 
@@ -211,6 +233,27 @@ legs round-robin so hitting the cap cannot drop a whole discipline. Denied docs
 lower the total rather than being backfilled, because over-fetching would push
 the number of papers map processes above the cap.
 Accept: returns 3-10 doc ids from at least two distinct sources.
+
+M2 align.py — score_alignment(ctx, retrieval) -> AlignmentReport.
+Sits between T3 and T4. For each retrieved paper, extract the seven structural
+slots (system, state_variable, perturbation, readout, constraints,
+failure_mode, isolation_unit) from the paper itself via map, then compare
+each slot against the target context. Comparison is deterministic:
+
+  mapped    paper instantiates the slot AND the target has a counterpart
+            -> the condition can be stated precisely in the target's language
+  unmapped  paper instantiates the slot AND the target has no counterpart
+            -> report to the scientist: this is where the transfer breaks
+  absent    the paper does not instantiate the slot; ignored in the score
+
+Gate: a paper with fewer than 3 mapped slots does not enter T4. A paper that
+clears 3 mapped slots but has at least as many unmapped as mapped enters T4
+flagged as weak. Denied-by-alignment papers stay in alignment.json so the
+scientist can see why they were held out. This replaces hand-pruning
+(DEFAULT_DENY is an escape hatch, not the mechanism).
+Accept: on the fixture, the two metaphor papers (arx_2204.07005,
+arx_2509.07237) score below the gate without being on the denylist; at least
+one ICU paper and one neuroimaging prediction paper clear it.
 
 T4 ledger.py — build_ledger(ctx, doc_ids) -> list[LedgerEntry].
 paperclip map --from <s_id> --output-schema data/schema/ledger_entry.json
