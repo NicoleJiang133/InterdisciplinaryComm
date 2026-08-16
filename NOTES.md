@@ -166,11 +166,9 @@ exception: Click-level argument errors do exit non-zero, with 2.)
 
 ## 6. No probed command emits JSON on stdout
 
-`search`, `map`, and `repo status` all return prose. The JSON-parsing branch of `pc()`
-is currently dead code kept to satisfy the contract in BUILD.md section 4. In practice
-`pc()` returns `str` today. `pc()` returns the parsed object only when stdout is a JSON
-*object*; a bare JSON array or scalar is returned as the raw string, because the
-declared return type is `dict | str`.
+`search`, `map`, and `repo status` all return prose. `pc()` therefore does no JSON
+parsing at all: it returns `str` and raises `PaperclipError` on `ERR:` or a non-zero
+exit. BUILD.md section 4 has been updated to match.
 
 ## 7. Pre-existing account state, left untouched
 
@@ -188,3 +186,90 @@ That repo appears in the footer of every search (`[repo: transfer-audit]`). It l
 human-created around the ground-truth source paper, and the Paperclip skill says not to
 add papers to a repo on the agent's own initiative, so nothing was written to it. Worth
 knowing that repo state is sticky and global to the account, not per-directory.
+
+## 8. There is no LLM-over-arbitrary-text primitive (blocks T2 as specified)
+
+BUILD.md T2 asks for "one call that fills the slots" from a free-text target
+description. No Paperclip command on this account can do that. Three routes probed,
+all dead ends:
+
+**8a. `generate-search-config` — disabled server-side.** It is the only command that
+takes arbitrary proposal text (`.md`/`.txt`) as input:
+
+```
+$ paperclip generate-search-config tests/fixtures/target_claim.txt -o /tmp/gsc.yaml --force
+...
+gxl_paperclip.client.errors.ForbiddenError: Curation search is currently disabled.
+EXIT=1
+```
+
+Note the shape of this failure: traceback on **stderr**, empty stdout, exit **1**. It is
+caught by the `returncode != 0` half of the new `pc()` contract, not the `ERR:` half —
+both halves are needed.
+
+**8b. `map`/`filter`/`reduce` only accept corpus search-result sets.** `map --from`
+requires an `s_*` id; `reduce --from` requires an `m_*` id. Neither accepts raw text.
+The query string is free text, but the reader is grounded on whatever papers are in the
+result set, so smuggling the claim into the query contaminates the extraction with an
+unrelated paper. Not used.
+
+**8c. Upload to `/clipboard/` is searchable but not map-readable.** The upload itself
+works and the document is parsed:
+
+```
+$ paperclip upload /tmp/ta_probe_claim.md --into analyses/transfer-audit-probe
+  ✓ ta_probe_claim.md → /clipboard/analyses/transfer-audit-probe/
+$ paperclip search -s clipboard -t "ta_probe_claim" -n 1
+Found 1 papers  [s_27f19c15]
+  1. ta_probe_claim.md
+     usr_d0c7e8bfbfad · clipboard · 2026-08-16
+$ paperclip cat /clipboard/analyses/transfer-audit-probe/usr_d0c7e8bfbfad/content.lines
+L1: A random-forest classifier trained on resting-state fMRI connectivity matrices
+...
+```
+
+`-s clipboard` is a valid source even though it is absent from the `-s` list in
+`--help`. But `map` refuses the document:
+
+```
+Map complete: 0/1 papers
+  ✗ Untitled
+    error: Stale or unavailable search result: usr_d0c7e8bfbfad has no loadable full text.
+```
+
+Retried 45s later against a fresh search id — identical failure, so this is not an
+indexing lag. Clipboard uploads are readable by `cat`/`search` and invisible to the map
+worker.
+
+Consequence: `ingest.py` extracts deterministically from the text and calls no
+Paperclip command. Every slot it emits is a verbatim span of the input; unmatched slots
+are None. `build_context()` is the single seam to swap in a model if one appears.
+
+**Side effect to clean up:** the 8c probe left `/clipboard/analyses/transfer-audit-probe/`
+in the account. `rm` is blocked in the Paperclip sandbox (`ERR: vsh: cp: permission
+denied` for `cp`, and there is no delete verb), so clipboard uploads accumulate. That is
+a second reason not to build ingest on upload: one clipboard document per run, forever.
+
+## 9. The live CLI depends on the real $HOME
+
+Proven: `/Users/Nicole/.local/bin/paperclip` imports its library from
+`$HOME/.paperclip/lib`, so anything that changes or hides the home directory kills it
+before it reaches the network:
+
+```
+$ HOME=/var/empty paperclip search "x" -s arxiv -n 1
+ModuleNotFoundError: No module named 'gxl_paperclip'
+REAL_EXIT=1        stdout: 0 bytes        traceback on stderr
+```
+
+Empty stdout, non-zero exit — the returncode half of the `pc()` contract catches it.
+Worth knowing that this failure mode writes nothing to stdout at all, so a transport
+that only checked for `ERR:` would return an empty string and look successful.
+
+Not proven: the integration test failed twice, both times in a restricted sandbox
+(once with the filesystem confined to the repo, once with that plus a network
+allowlist), and passed on eleven runs outside it. The error text was not captured at
+the time, so the specific cause — blocked writes to `~/.paperclip` versus a blocked
+route to paperclip.gxl.ai — is still a guess. Either way the CLI needs a real home
+directory and unrestricted access to the server. The unit tests are hermetic
+(subprocess is monkeypatched); only the `@pytest.mark.integration` test needs both.
