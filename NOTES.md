@@ -4,6 +4,33 @@ Everything below was run against the live CLI on 2026-08-15, authenticated as
 `nicolejiang2324@gmail.com`, server `https://paperclip.gxl.ai`. No behaviour here
 is inferred from documentation — each line is what the CLI actually did.
 
+## 0. Architectural finding: Paperclip has no general LLM endpoint
+
+**`map` runs an AI reader over PAPERS, not over arbitrary text.** This is the single
+most important constraint on the system's shape, and it is not obvious from the docs,
+which describe `map`/`filter`/`reduce` in language that sounds like general LLM access.
+
+Concretely: `map --from` requires an `s_*` search-result id and `reduce --from` requires
+an `m_*` map id. The query is free text, but the reader is always grounded on documents
+in a corpus result set. There is no command that takes a block of text and returns a
+model's structured answer about it. The one command that reads arbitrary text,
+`generate-search-config`, is disabled server-side on this account, and text uploaded to
+`/clipboard/` is searchable but invisible to the map worker. Evidence for all three in
+section 8.
+
+What follows from this:
+
+- **Anything the pipeline needs an LLM to do to OUR text needs a different provider.**
+  T2 ingest reads a claim written by a human, not a paper, so it calls the Anthropic API
+  directly. That is the sole justification for the `anthropic` dependency, and ingest is
+  the only place it may appear.
+- **Anything the pipeline needs an LLM to do to PAPERS should stay in Paperclip.** T4 is
+  a natural fit for `map --output-schema`: it reasons over retrieved documents, gets
+  schema validation and one correction attempt for free, and keeps per-paper provenance.
+- The boundary between those two sentences is the architecture. Do not blur it by
+  routing paper reading through Anthropic (it has no corpus, and we lose line-level
+  citations) or by trying to route claim parsing through Paperclip (it cannot).
+
 ## 1. `paperclip search "data leakage" -s arxiv -n 3 --json`
 
 `--json` is **silently ignored**. Exit code 0, human-readable text on stdout, no JSON:
@@ -266,10 +293,15 @@ Empty stdout, non-zero exit — the returncode half of the `pc()` contract catch
 Worth knowing that this failure mode writes nothing to stdout at all, so a transport
 that only checked for `ERR:` would return an empty string and look successful.
 
-Not proven: the integration test failed twice, both times in a restricted sandbox
-(once with the filesystem confined to the repo, once with that plus a network
-allowlist), and passed on eleven runs outside it. The error text was not captured at
-the time, so the specific cause — blocked writes to `~/.paperclip` versus a blocked
-route to paperclip.gxl.ai — is still a guess. Either way the CLI needs a real home
-directory and unrestricted access to the server. The unit tests are hermetic
-(subprocess is monkeypatched); only the `@pytest.mark.integration` test needs both.
+Narrowed by a later run: the paperclip integration test fails only when the filesystem
+is confined to the repo directory, and it fails in the same shape — `exited 1` with
+**empty stdout**, i.e. the CLI dies before producing output. The decisive run had
+unrestricted network and the Anthropic integration test passed inside it, so the
+network is not the cause; losing access to `~/.paperclip` is. Outside that
+confinement the test has passed on every run.
+
+Practical consequence: `paperclip` needs a real, writable `$HOME/.paperclip`, and it
+fails in the one shape that a stdout-only error check cannot see. The unit tests are
+hermetic — `subprocess` is monkeypatched for `pc()` and a stub client replaces
+Anthropic — so only the two `@pytest.mark.integration` tests need credentials, network,
+and an unrestricted home.

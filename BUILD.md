@@ -44,6 +44,8 @@ If a task seems to require something out of scope, stop and flag it.
 
 Python 3.12
 pydantic v2, typer, jinja2, pytest
+anthropic  # ingest only. Paperclip has no general LLM endpoint.
+           # Key from ANTHROPIC_API_KEY env var, never hardcoded.
 
 Paperclip: shell out to the `paperclip` CLI via subprocess.
 The SDK is NOT pip-installable and NOT importable from our venv.
