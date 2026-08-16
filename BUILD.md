@@ -202,21 +202,34 @@ T6 cli.py — typer:
   transfer-audit run --replay runs/<ts>
 Accept: run completes end to end in under 4 minutes, produces all four files.
 
-T7 eval/score.py — reads data/ground_truth.csv and a ledger, prints exactly:
-  recall     fraction of labelled leakage types for which a matching
-             axis/subtype entry was generated
-  precision  fraction of generated entries judged meaningful, see section 6 H3
-  fpr        fraction of clean-control cases where any entry is VIOLATED
-Accept: prints three numbers with the denominator alongside each, e.g.
-"recall 0.71 (12/17)". Small-n is fine; hiding it is not.
+T7 eval/score.py — reads data/ground_truth.csv and a ledger, prints:
+  recall                fraction of labelled leakage types for which a matching
+                        axis/subtype entry was generated
+  precision             fraction of generated entries judged meaningful, see
+                        section 6 H3
+  status_distribution   counts and percentages of SATISFIED / VIOLATED /
+                        UNKNOWN / NA across all entries in a ledger
+Accept: prints recall and precision with the denominator alongside each, e.g.
+"recall 0.71 (12/17)", then the four-way status distribution. Small-n is fine;
+hiding it is not.
+
+FPR was dropped. H2 produced four negative controls, of which one is fetchable
+(NC04). n=1 is not a number. status_distribution measures the same property —
+whether the tool knows when to stay quiet — with no ground truth. A healthy
+ledger is mostly UNKNOWN with specific what_would_resolve_it values, some
+SATISFIED, and few VIOLATED. A tool that marks everything VIOLATED shows up
+immediately. data/negative_controls.csv is kept: NC04 is one real scored
+control and the file documents an honest attempt.
 
 ## 6. Human-only tasks — do not assign to the coding agent
 
 H1 data/ground_truth.csv. Seeded from arXiv:2207.07048 Table 1. The 14 rows
 marked TODO must be read off the PDF by a human. Critical path for T7.
 
-H2 Clean negative controls. Five papers reviewed in the same fields and found
-clean. Needed for fpr. Without these the benchmark is not credible.
+H2 Clean negative controls. CLOSED. Four papers found, one fetchable
+(NC04 / arx_1807.01068). IEEE controls are paywalled. FPR dropped from T7
+(n=1 is not a number); replaced by status_distribution. Keep
+data/negative_controls.csv.
 
 H3 Precision judgement. Judge and score 10 generated entries as meaningful or not.
 Cannot be automated in 12 hours. Say n=10 on stage.
@@ -230,8 +243,8 @@ good what_would_resolve_it is a success state, not a failure.
 
 Guard against UNKNOWN-spam. An agent maximising recall will mark every axis
 UNKNOWN. The mandatory specific what_would_resolve_it field is the structural
-guard; reporting precision and fpr alongside recall is the reported guard.
-Never report recall alone.
+guard; reporting precision and status_distribution alongside recall is the
+reported guard. Never report recall alone.
 
 ## 8. Demo path
 
@@ -241,6 +254,6 @@ The only path that must work flawlessly. Pre-compute everything else.
 2. transfer-audit run — under 4 minutes, live
 3. Report opens: five axes, mixed statuses, every claim traceable to a doc id
 4. Point at one VIOLATED entry — this is the finding
-5. transfer-audit score — the three numbers, shown from file
+5. transfer-audit score — recall, precision, and the status distribution, shown from file
 
 Build the --replay flag early, not at 10am on Sunday.
