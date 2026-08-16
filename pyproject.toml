@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transfer-audit"
+version = "0.1.0"
+description = "Generates an assumption ledger for scientific claims borrowed across disciplines."
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2",
+    "typer",
+    "jinja2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+transfer-audit = "transfer_audit.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: hits the live paperclip CLI (deselect with '-m \"not integration\"')",
+]

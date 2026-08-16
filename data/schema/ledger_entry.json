@@ -1,0 +1,105 @@
+{
+  "additionalProperties": false,
+  "description": "One audited validity condition of the source result.",
+  "properties": {
+    "axis": {
+      "enum": [
+        "A_isolation",
+        "B_legitimacy",
+        "C_domain_of_validity",
+        "D_metric_alignment",
+        "E_evidence_quality"
+      ],
+      "title": "Axis",
+      "type": "string"
+    },
+    "subtype": {
+      "anyOf": [
+        {
+          "enum": [
+            "A1",
+            "A2",
+            "A3",
+            "A4",
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Subtype"
+    },
+    "status": {
+      "enum": [
+        "SATISFIED",
+        "VIOLATED",
+        "UNKNOWN",
+        "NA"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "source_assumption": {
+      "title": "Source Assumption",
+      "type": "string"
+    },
+    "target_restatement": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Target Restatement"
+    },
+    "rationale": {
+      "title": "Rationale",
+      "type": "string"
+    },
+    "evidence_lines": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidence Lines"
+    },
+    "what_would_resolve_it": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "What Would Resolve It"
+    },
+    "source_doc_id": {
+      "title": "Source Doc Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "axis",
+    "status",
+    "source_assumption",
+    "rationale",
+    "source_doc_id"
+  ],
+  "title": "LedgerEntry",
+  "type": "object"
+}

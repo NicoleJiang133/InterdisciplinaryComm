@@ -1,0 +1,4 @@
+A random-forest classifier trained on resting-state fMRI connectivity matrices
+predicts conversion to Alzheimer's disease with 92% accuracy, so the same
+connectivity-based approach should predict which ICU patients will develop
+sepsis from their continuous vital-sign monitoring streams.
