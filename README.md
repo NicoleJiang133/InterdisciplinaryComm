@@ -1,4 +1,4 @@
-# transfer-audit
+# CrossWork
 
 Takes a scientific claim borrowed from another discipline and emits an assumption ledger: the source result's validity conditions, restated in the target system's language.
 
