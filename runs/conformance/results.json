@@ -1,0 +1,235 @@
+{
+  "scored_at": "2026-08-16T15:25:00+00:00",
+  "suite": "data/transfer_bench.jsonl",
+  "n_claims": 8,
+  "pipeline_ok": 8,
+  "pipeline_failed": 0,
+  "conformance": "5 of 8",
+  "hits": 5,
+  "misses": 3,
+  "uncovered": {
+    "type": "L3.1",
+    "note": "Temporal leakage is not in the suite (Tu 2018, Lyu 2021 unread IEEE). Not scored."
+  },
+  "criterion": "A case hits if the ledger contains a question that, honestly answered, would surface the labelled leakage type. Subtype tags are evidence, not the score. Nothing was tuned after seeing the number.",
+  "status_distribution_all_runs": {
+    "n_entries": 62,
+    "n_drops": 1,
+    "SATISFIED": 0,
+    "VIOLATED": 0,
+    "UNKNOWN": 62,
+    "NA": 0
+  },
+  "axis_counts_all_runs": {
+    "A_isolation": 42,
+    "B_legitimacy": 1,
+    "C_domain_of_validity": 16,
+    "D_metric_alignment": 1,
+    "E_evidence_quality": 2
+  },
+  "tb11_telegraphing": {
+    "closest_to_telegraphing_own_label": true,
+    "hit": true,
+    "earned_or_handed": "handed",
+    "note": "TB11 hit. The claim says a spatial filter is 'fit to a subject's SSVEP templates' and then used to detect which of 40 targets that subject is attending to. That phrasing already suggests fitting and detection share the same subject's data. The ledger's A1 questions (calibration templates vs held-out spelling blocks) are exactly the question that phrasing invites. Retrieved SSVEP papers do discuss leave-one-block-out CV, so the axis was not invented from nothing — but the mapping onto the target was handed over by the claim text."
+  },
+  "cases": [
+    {
+      "id": "TB03",
+      "expected_type": "L3.3",
+      "maps_to": "C3 representativeness",
+      "primary_study": "Wall, Kosmicki, DeLuca, Harstad & Fusaro, 2012, Translational Psychiatry",
+      "source_discipline_pin": "autism diagnostics",
+      "pin_reason": "claim names ADOS Module 1, AGRE, and autism screening",
+      "inferred_source_discipline_hint": null,
+      "pipeline_ok": true,
+      "n_entries": 7,
+      "n_drops": 0,
+      "hit": true,
+      "matching_questions": [
+        {
+          "source_doc_id": "PMC3337074",
+          "axis": "C_domain_of_validity",
+          "subtype": "C3",
+          "primary": true,
+          "what_would_resolve_it": "Were the home videos or out-of-clinic observations scored by raters blinded to clinical diagnosis using the exact operationalized definitions of the 8 ADOS Module 1 items?",
+          "target_restatement": "Children screened for autism outside the clinic must exhibit behaviors and item-score distributions that align with the ADOS Module 1 definitions established in clinical populations."
+        },
+        {
+          "source_doc_id": "PMC7798323",
+          "axis": "C_domain_of_validity",
+          "subtype": "C3",
+          "primary": false,
+          "what_would_resolve_it": "What are the demographic characteristics, age distribution, and setting-specific referral pathways of the children being screened outside the clinic?"
+        }
+      ],
+      "judgment": "Hit. Two C3 entries ask whether the outside-clinic screening population matches the clinical ADOS cohorts the classifier was derived on (AGRE / clinical Module 1). That is L3.3 representativeness. The resolution question on the primary (PMC3337074) drifted into rater protocol; the restatement is the representativeness check. Bone's specific mechanism (borderline cases dropped from the test set) is not named, but answering the cohort-match question would surface that the instrument was validated on a cleaned clinical sample, not the claimed screening population."
+    },
+    {
+      "id": "TB04",
+      "expected_type": "L1.2",
+      "maps_to": "A2 preprocessing crossed the split",
+      "primary_study": "Taft, Evans, Shyu, Egger, Chawla & Mitchell, 2009, J Biomed Inform",
+      "source_discipline_pin": "obstetrics",
+      "pin_reason": "claim names obstetric admissions and labor and delivery",
+      "inferred_source_discipline_hint": null,
+      "pipeline_ok": true,
+      "n_entries": 7,
+      "n_drops": 0,
+      "hit": false,
+      "matching_questions": [],
+      "judgment": "Miss. Ledger is A1 (patient/hospital splits) and C3 (other-hospital case mix). No A2. No question asks whether oversampling, scaling, imputation, or any other preprocessing was fit on the full dataset before the train/test split. Answering the split-unit questions would not surface that."
+    },
+    {
+      "id": "TB07",
+      "expected_type": "L1.4",
+      "maps_to": "A4 duplicate entities across groups",
+      "primary_study": "Luechtefeld, Marsh, Rowlands & Hartung, 2018, Toxicol Sci (RASAR)",
+      "source_discipline_pin": "toxicology",
+      "pin_reason": "claim names ECHA REACH, UN GHS health hazards, and OECD animal tests",
+      "inferred_source_discipline_hint": null,
+      "pipeline_ok": true,
+      "n_entries": 7,
+      "n_drops": 0,
+      "hit": true,
+      "matching_questions": [
+        {
+          "source_doc_id": "PMC6135638",
+          "axis": "A_isolation",
+          "subtype": "A4",
+          "primary": true,
+          "what_would_resolve_it": "Were any of the target untested commercial chemicals included in the 80,908 chemicals used to build the initial PubChem similarity adjacency matrix and feature vectors?",
+          "target_restatement": "Are the untested commercial chemicals structurally distinct from the training set, or do identical/highly overlapping chemical entries appear both in the reference adjacency matrix and the test set?"
+        }
+      ],
+      "judgment": "Hit. The primary RASAR paper (PMC6135638) produced an A4 question: whether evaluation chemicals (or highly overlapping structures) already sit in the 80,908-chemical similarity matrix built on the whole database before CV. Answering that surfaces duplicate/overlapping chemicals across groups (L1.4)."
+    },
+    {
+      "id": "TB11",
+      "expected_type": "L1.1",
+      "maps_to": "A1 no independent test set",
+      "primary_study": "Kiran Kumar & Ramasubba Reddy, 2019, IEEE TNSRE (SSCOR)",
+      "source_discipline_pin": "SSVEP",
+      "pin_reason": "claim names SSVEP templates, EEG, and an SSVEP-based BCI speller",
+      "inferred_source_discipline_hint": null,
+      "pipeline_ok": true,
+      "n_entries": 8,
+      "n_drops": 0,
+      "hit": true,
+      "matching_questions": [
+        {
+          "source_doc_id": "arx_1805.02809",
+          "axis": "A_isolation",
+          "subtype": "A1",
+          "primary": false,
+          "what_would_resolve_it": "Were the user calibration templates for the speller built exclusively from preceding training blocks, leaving the online spelling blocks completely unseen during template generation?"
+        },
+        {
+          "source_doc_id": "arx_2204.08030",
+          "axis": "A_isolation",
+          "subtype": "A1",
+          "primary": false,
+          "what_would_resolve_it": "Were the calibration blocks and test blocks separated per session or subject such that no overlapping trials or fitted filter parameters from the test block were used during training?"
+        }
+      ],
+      "judgment": "Hit, handed over by the claim text. See tb11_telegraphing. Five A1 entries ask whether calibration templates / spatial filters are fit on data that includes the evaluation trials. That is L1.1. The claim is the suite member closest to telegraphing its own label."
+    },
+    {
+      "id": "TB12",
+      "expected_type": "L3.2",
+      "maps_to": "C2 dependence structure",
+      "primary_study": "Coudray et al., 2018, Nature Medicine",
+      "source_discipline_pin": "histopathology",
+      "pin_reason": "claim names TCGA whole-slide images and NSCLC histopathology",
+      "inferred_source_discipline_hint": null,
+      "pipeline_ok": true,
+      "n_entries": 8,
+      "n_drops": 0,
+      "hit": true,
+      "matching_questions": [
+        {
+          "source_doc_id": "arx_2204.04516",
+          "axis": "A_isolation",
+          "subtype": "A1",
+          "primary": false,
+          "what_would_resolve_it": "Were the train and test splits made by patient ID, so that no patient's histopathology slides contribute tiles to both sides?"
+        },
+        {
+          "source_doc_id": "arx_2506.00096",
+          "axis": "A_isolation",
+          "subtype": "A4",
+          "primary": false,
+          "what_would_resolve_it": "Were the data splits performed at the patient level so that no patient's slides appear in both training and testing sets?"
+        }
+      ],
+      "judgment": "Hit on the question, not on the subtype tag. Six entries ask whether multiple slides or tiles from the same patient cross the train/test boundary. Answering that surfaces Oner's L3.2 (same patient in train and test; the claim is about new patients). The ledger tagged these A4/A1, never C2. The question is the right one; the tag is not."
+    },
+    {
+      "id": "TB17",
+      "expected_type": "L2",
+      "maps_to": "B_legitimacy",
+      "primary_study": "Ye et al., 2018, JMIR (Maine HIE)",
+      "source_discipline_pin": "electronic health records",
+      "pin_reason": "claim names Maine Health Information Exchange and EHR records",
+      "inferred_source_discipline_hint": null,
+      "pipeline_ok": true,
+      "n_entries": 9,
+      "n_drops": 0,
+      "hit": false,
+      "matching_questions": [],
+      "judgment": "Miss. No B_legitimacy entry. Questions are patient-level splits (A1/A4), imputation-before-split (A2), nested feature selection (A3), and cohort inclusion (C3). The primary (PMC5811646) asked whether univariate feature filtering leaked from the prospective window — L1.3, not L2. Nobody asked whether predictors include treatments recorded because of the outcome (antihypertensive use as a feature for incident hypertension)."
+    },
+    {
+      "id": "TB18",
+      "expected_type": "L1.3",
+      "maps_to": "A3 feature selection crossed the isolation boundary",
+      "primary_study": "Zhdanov et al., 2020, JAMA Network Open",
+      "source_discipline_pin": "psychiatric EEG",
+      "pin_reason": "claim names resting-state EEG, MDD, escitalopram, and CAN-BIND-1",
+      "inferred_source_discipline_hint": null,
+      "pipeline_ok": true,
+      "n_entries": 8,
+      "n_drops": 1,
+      "hit": true,
+      "matching_questions": [
+        {
+          "source_doc_id": "PMC6991244",
+          "axis": "A_isolation",
+          "subtype": "A3",
+          "primary": true,
+          "what_would_resolve_it": "Were the feature ranking and thresholding steps nested strictly inside each cross-validation training fold, or were they computed globally on the entire cohort prior to evaluation?"
+        },
+        {
+          "source_doc_id": "arx_2108.11064",
+          "axis": "A_isolation",
+          "subtype": "A3",
+          "primary": false,
+          "what_would_resolve_it": "Were feature selection and model training restricted entirely to a designated training fold or cohort, completely excluding the test patients at the new clinic from the edge-selection step?"
+        }
+      ],
+      "judgment": "Hit. Three A3 entries, including the primary Zhdanov paper (PMC6991244), ask whether feature ranking/selection was nested inside training folds or computed on the whole cohort before evaluation. That is L1.3."
+    },
+    {
+      "id": "TB20",
+      "expected_type": "L2",
+      "maps_to": "B_legitimacy",
+      "primary_study": "Li et al., 2018, NDSS (VulDeePecker)",
+      "source_discipline_pin": "software security",
+      "pin_reason": "claim names C/C++ code gadgets and software vulnerability detection",
+      "inferred_source_discipline_hint": null,
+      "pipeline_ok": true,
+      "n_entries": 8,
+      "n_drops": 0,
+      "hit": false,
+      "matching_questions": [],
+      "judgment": "Miss. No B_legitimacy entry. The primary (arx_1801.01681) asked whether evaluation codebases overlap the training programs (L1.1). Other questions cover duplicate lexed functions (L1.4), resampling (L1.2), and feature selection (L1.3). Nobody asked whether code-gadget tokens are a vulnerability signal or a spurious correlate. Scored as L2 only, per the suite entry; a hit on any of Arp's other five types would not count."
+    }
+  ],
+  "notes": [
+    "All 8 claims ran end to end. Ingest inferred source_discipline_hint = null on every claim; pins were applied at retrieve.",
+    "Source-leg in-discipline floor was missed on TB03, TB04, and TB07 (generic methods cluster). Not used to change any hit/miss.",
+    "B_legitimacy fired once in 62 entries (TB03, ADOS items outside clinic) and on neither L2 case. L2 is 0 of 2.",
+    "A2 did fire (TB17 imputation, TB20 resampling) but not on TB04, the labelled L1.2 case.",
+    "cli.py / report.py / eval/score.py were not used. Pipeline called ingest → retrieve → align → ledger directly."
+  ]
+}

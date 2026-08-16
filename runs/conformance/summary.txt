@@ -1,0 +1,41 @@
+Conformance suite  data/transfer_bench.jsonl
+Scored 16 Aug 2026. Pipeline 8 of 8 ok. Nothing tuned after the run.
+
+  5 of 8
+
+Criterion: ledger contains a question that, honestly answered,
+would surface the labelled leakage type.
+
+Status distribution (all runs combined, 62 entries, 1 drop)
+  SATISFIED    0
+  VIOLATED     0
+  UNKNOWN     62
+  NA           0
+
+Uncovered: L3.1 (Tu 2018, Lyu 2021). Not in the 8.
+
+id    type   pin                         hit   why
+----  -----  --------------------------  ----  ----------------------------------------------
+TB03  L3.3   autism diagnostics          yes   C3: outside-clinic vs clinical ADOS cohorts
+TB04  L1.2   obstetrics                  no    no A2; no preprocessing-before-split question
+TB07  L1.4   toxicology                  yes   A4 on RASAR primary: chemicals already in the
+                                               80,908 used to build the similarity matrix
+TB11  L1.1   SSVEP                       yes   A1: calibration templates vs held-out blocks
+                                               (claim text handed this over)
+TB12  L3.2   histopathology              yes   patient-level slide/tile split (tagged A4, not C2)
+TB17  L2     electronic health records   no    no B_legitimacy; nobody asked if features encode
+                                               the outcome (antihypertensives)
+TB18  L1.3   psychiatric EEG             yes   A3 on Zhdanov primary: feature ranking nested
+                                               in folds vs computed on the whole cohort
+TB20  L2     software security           no    no B_legitimacy; nobody asked if gadget tokens
+                                               are a vulnerability signal
+
+TB11 (Nakanishi/SSVEP) is the claim closest to telegraphing its own label.
+It hit. The hit looks handed over: "fit to a subject's SSVEP templates"
+already suggests fitting and detection share the same subject's data.
+The ledger asked that question. Retrieved SSVEP papers do discuss
+leave-one-block-out CV, so the axis was not invented — the mapping
+onto the target was.
+
+L2 is 0 of 2 (TB17 Filho/Ye, TB20 Arp/VulDeePecker).
+B_legitimacy fired once in 62 entries, on TB03, not on either L2 case.
