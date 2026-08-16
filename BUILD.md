@@ -110,6 +110,24 @@ LedgerEntry (produced by ledger.py, drives paperclip map --output-schema):
 Validator: if status == "UNKNOWN" then what_would_resolve_it must be non-empty
 and at least 20 characters. This is the anti-gaming rule — see section 7.
 
+Status contract. source_assumption describes the SOURCE paper. status and
+target_restatement describe the TARGET, and are judged only against what the
+target description actually says:
+  SATISFIED  the target description positively states the condition is met, and
+             the rationale names the part of it that does.
+  VIOLATED   the target description positively shows the condition fails. A
+             difference in subject, population or modality between source and
+             target is NOT evidence of violation. Inferring failure from domain
+             distance is invention, not audit.
+  UNKNOWN    the default and the expected majority. The target is a short claim
+             and is usually silent on method. Requires a specific answerable
+             what_would_resolve_it — the question a reviewer would put to the
+             team, not "more information is needed".
+  NA         the axis genuinely cannot apply to this transfer.
+A ledger that is entirely SATISFIED, or entirely VIOLATED, is a failed audit:
+status was set by framing rather than evidence. Both failure modes have been
+observed on the fixture — see NOTES.md section 13c.
+
 Emit the JSON Schema from the pydantic model via LedgerEntry.model_json_schema(),
 write it to data/schema/ledger_entry.json.
 
@@ -179,9 +197,19 @@ override, then the inferred slot. With neither, the source leg falls back to a
 methods framing of the target slots and warns loudly on stderr — that run still
 returns two sources but is topically narrower, and the operator should know.
 
+Prune weak retrievals at query-construction time, never with `paperclip filter`:
+filter rewrites the stored result set in place, which breaks `map --from` and so
+breaks T6 --replay (NOTES.md section 13d). The source-leg query therefore asks
+for studies that STATE their inclusion criteria, split and external-cohort
+performance, which excludes conceptual guides that offer only metaphors. A
+doc-id denylist (retrieve.DEFAULT_DENY, overridable via deny=) is the escape
+hatch for papers that survive the query and still produce nothing auditable.
+
 Cap total at 10 documents. Paperclip docs are explicit that map is fast only on
 3-10 papers. Do not raise this cap; it will make the demo time out. Merge the
-legs round-robin so hitting the cap cannot drop a whole discipline.
+legs round-robin so hitting the cap cannot drop a whole discipline. Denied docs
+lower the total rather than being backfilled, because over-fetching would push
+the number of papers map processes above the cap.
 Accept: returns 3-10 doc ids from at least two distinct sources.
 
 T4 ledger.py — build_ledger(ctx, doc_ids) -> list[LedgerEntry].

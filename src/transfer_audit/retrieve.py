@@ -20,6 +20,7 @@ import csv
 import re
 import sys
 import tempfile
+from collections.abc import Collection
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -31,6 +32,23 @@ from transfer_audit.pc import pc
 MAX_DOCS = 10
 PER_SEARCH = 5
 MIN_DOCS = 3
+
+# Escape hatch for papers that survive the query but yield only metaphors. Pruning
+# happens here, at query-construction time, and never with `paperclip filter`: filter
+# rewrites the stored result set in place, which breaks `map --from` and T6 --replay
+# (NOTES.md section 13d). A denied doc is still mapped, because map addresses a whole
+# search id; its entry is discarded against the doc-id allowlist in ledger.py.
+DEFAULT_DENY = frozenset(
+    {
+        # "Interpretability of Machine Learning Methods Applied to Neuroimaging" and
+        # "Normative Modelling in Neuroimaging: A Practical Guide". Both are conceptual
+        # guides, so the only condition they offer is spatial registration of brain
+        # images, which restates as "align the vital-sign streams somehow". A metaphor,
+        # not an audit finding, in two independent iterations.
+        "arx_2204.07005",
+        "arx_2509.07237",
+    }
+)
 
 _SEARCH_ID = re.compile(r"\bs_[0-9a-f]{6,}\b")
 
@@ -87,9 +105,13 @@ def source_query(ctx: TransferContext, source_discipline: str | None = None) -> 
     """
     discipline = source_discipline or ctx.source_discipline_hint
     if discipline:
+        # Asks for studies that STATE their validity conditions. The looser phrasing
+        # "validity conditions and cohort generalisation" also returned conceptual
+        # guides and interpretability reviews, which have no protocol to audit.
         return (
-            f"{discipline}: validity conditions and cohort generalisation required "
-            "when a trained model is applied to a new population"
+            f"{discipline} prediction models evaluated on an external cohort: stated "
+            "inclusion criteria, train-test split by subject, and measured performance "
+            "change when the model is applied to a different population"
         )
     print(
         "WARNING: no source discipline (neither --source-discipline nor an inferred "
@@ -100,8 +122,8 @@ def source_query(ctx: TransferContext, source_discipline: str | None = None) -> 
     subject = ctx.state_variable or ctx.target_claim
     readout = _clause("from", ctx.readout)
     return (
-        f"machine learning prediction of {subject} {readout}: model validation, "
-        "generalisation to new cohorts, and data leakage"
+        f"machine learning prediction of {subject} {readout}: stated inclusion "
+        "criteria, train-test split, external validation, and data leakage"
     ).replace("  ", " ")
 
 
@@ -124,6 +146,7 @@ def retrieve(
     ctx: TransferContext,
     *,
     source_discipline: str | None = None,
+    deny: Collection[str] = DEFAULT_DENY,
     limit: int = MAX_DOCS,
     per_search: int = PER_SEARCH,
     workdir: Path | None = None,
@@ -157,6 +180,7 @@ def retrieve(
                     search_id=search_id,
                 )
                 for row in _export_rows(search_id, workdir)
+                if row["id"] not in deny
             ]
         )
 
@@ -190,9 +214,14 @@ def retrieve(
     return result
 
 
-def find_sources(ctx: TransferContext, source_discipline: str | None = None) -> list[str]:
+def find_sources(
+    ctx: TransferContext,
+    source_discipline: str | None = None,
+    *,
+    deny: Collection[str] = DEFAULT_DENY,
+) -> list[str]:
     """BUILD.md T3 entry point. Use retrieve() when you also need the s_* ids."""
-    return retrieve(ctx, source_discipline=source_discipline).doc_ids
+    return retrieve(ctx, source_discipline=source_discipline, deny=deny).doc_ids
 
 
 def write_search(result: Retrieval, path: Path) -> Path:

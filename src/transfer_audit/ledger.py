@@ -75,18 +75,36 @@ itself documents: its stated inclusion criteria, its single site, its recruitmen
 window, its repeated measures. C1 temporal direction, C2 dependence structure, C3 \
 representativeness.
 
-status: SATISFIED if this paper shows the condition is met and the target could meet it \
-the same way. VIOLATED if this paper's own design breaks it, or the target plainly \
-cannot satisfy it. UNKNOWN if the paper does not report enough to tell. NA if the \
-condition cannot apply.
-If status is UNKNOWN, what_would_resolve_it is REQUIRED: name the specific table, \
-measurement, or record that would settle it, in at least 20 characters.
+STATUS IS ABOUT THE TARGET, NOT ABOUT THIS PAPER. You are not grading this paper. You \
+are judging whether the TARGET described above can satisfy the analogous condition, \
+using only what the target description actually says. The target description is the \
+handful of lines above and nothing else.
+
+  SATISFIED — only when the target description positively states the condition is met. \
+Say in the rationale which part of the target description states it.
+  VIOLATED — only when the target description positively shows the condition fails. \
+That this paper studies a different subject, population or data modality is NOT \
+evidence of failure. Do not infer failure from distance between the two domains.
+  UNKNOWN — the expected answer, and a SUCCESS state when it carries a real question. \
+The target is a short claim that is usually silent about method, so most conditions \
+cannot be judged from it. Prefer UNKNOWN to a guess in either direction.
+  NA — the axis genuinely cannot apply to this transfer.
+
+A ledger in which every entry is SATISFIED, or every entry is VIOLATED, is a FAILED \
+audit: it means status was decided by framing rather than by evidence.
+
+what_would_resolve_it is REQUIRED when status is UNKNOWN, at least 20 characters. Write \
+the single question a reviewer would actually put to the team — answerable by pointing \
+at a protocol, a split definition, a table, or a number. "More information is needed" \
+and "further validation is required" are failed answers. A good one reads like: "Are \
+the train and test splits made by patient admission, so that no ICU stay contributes \
+windows to both sides?"
 
 source_assumption: what THIS paper assumes, in its own terms. A sentence that would be \
 true of any paper in the field is a failed answer — cite its cohort, its split, its \
 preprocessing, its instrument, or its metric.
 target_restatement: what the analogous condition would demand of {target_system}.
-evidence_lines: line numbers or the section of this paper you read it from.
+evidence_lines: line numbers or the section of THIS paper you read the assumption from.
 source_doc_id: this paper's document id.\
 """
 

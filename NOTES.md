@@ -463,3 +463,31 @@ that probe removed all five source-leg papers in half a second for a methods-lev
 question their abstracts do not answer. After the `--require` failure the stored set was
 still intact on re-export, so the probe did no lasting damage, but a filter call that
 *succeeds* presumably does persist.
+
+### 13e. Status contract resolved; the axis attractor just moved
+
+Section 13c is settled by decision: status describes the TARGET, judged only against
+what the target description says. SATISFIED requires the description to state the
+condition is met, VIOLATED requires it to show the condition fails, and domain distance
+is explicitly not evidence. UNKNOWN is the expected majority and a success state when it
+carries an answerable question. BUILD.md section 4 now carries this as the contract.
+
+On the fixture that produces 9 entries, 0 drops, **9/9 UNKNOWN** — which is the intended
+shape, since the fixture target is two sentences that say nothing about method.
+
+The new problem is redundancy. Seven of the nine entries are A_isolation, and seven ask
+effectively the same question: are the train and test splits made by patient admission?
+Reordering the axis menu to A, B, D, E, C fixed the C monoculture by turning A into the
+attractor. Every retrieved paper reports its split, so A is always the first axis with
+concrete evidence, and the "stop at the FIRST axis" rule then locks it in.
+
+Two smaller defects visible in the same output: `what_would_resolve_it` is verbatim
+identical to `target_restatement` in four entries, so the field carries no extra
+information; and one resolution is phrased as a demand ("Provide the exact patient-level
+partitioning protocol") rather than a question.
+
+The two entries that are not about splits are the strongest in the ledger — labels
+defined by antibiotic administration time (B_legitimacy, PMC6925691) and a transductive
+assumption requiring auxiliary factors to be known for test subjects in advance
+(C_domain_of_validity, arx_2410.00946). Both are specific enough that a reviewer could
+act on them.

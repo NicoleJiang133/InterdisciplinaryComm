@@ -8,6 +8,7 @@ import pytest
 from transfer_audit import retrieve as retrieve_module
 from transfer_audit.models import TransferContext
 from transfer_audit.retrieve import (
+    DEFAULT_DENY,
     MAX_DOCS,
     RetrievalError,
     find_sources,
@@ -58,11 +59,15 @@ class FakePc:
         self.stdouts = list(stdouts if stdouts is not None else [ARXIV_STDOUT, PMC_STDOUT])
         self.rows = rows if rows is not None else ROWS
         self.calls: list[tuple[str, ...]] = []
+        self._search_count = 0
 
     def __call__(self, *args: str, timeout: int = 300) -> str:
         self.calls.append(args)
         if args[0] == "search":
-            return self.stdouts.pop(0)
+            # cycles, so one fake can serve several retrieve() calls in a test
+            stdout = self.stdouts[self._search_count % len(self.stdouts)]
+            self._search_count += 1
+            return stdout
         if args[0] == "results":
             search_id, path = args[1], Path(args[3])
             with path.open("w", newline="", encoding="utf-8") as handle:
@@ -121,6 +126,28 @@ def test_find_sources_accepts_the_override(fake_pc, tmp_path, monkeypatch):
     find_sources(CTX, "labour economics")
     source_leg = next(call for call in fake_pc.calls if call[0] == "search")
     assert "labour economics" in source_leg[1]
+
+
+def test_denied_docs_are_dropped_before_the_ledger_sees_them(fake_pc, tmp_path):
+    result = retrieve(CTX, deny={"arx_2103.16685"}, workdir=tmp_path)
+    assert "arx_2103.16685" not in result.doc_ids
+    assert "arx_2410.00946" in result.doc_ids
+
+
+def test_denylist_lowers_the_total_rather_than_backfilling(fake_pc, tmp_path):
+    kept = retrieve(CTX, deny=frozenset(), workdir=tmp_path).doc_ids
+    pruned = retrieve(CTX, deny={"arx_2103.16685"}, workdir=tmp_path).doc_ids
+    assert len(pruned) == len(kept) - 1
+
+
+def test_the_two_metaphor_papers_are_denied_by_default():
+    assert {"arx_2204.07005", "arx_2509.07237"} <= set(DEFAULT_DENY)
+
+
+def test_source_query_asks_for_stated_validity_conditions():
+    query = source_query(CTX)
+    assert "inclusion criteria" in query
+    assert "train-test split" in query
 
 
 def test_ids_come_from_the_csv_not_from_stdout(fake_pc, tmp_path):
@@ -221,7 +248,7 @@ def test_write_search_persists_ids_for_t4(fake_pc, tmp_path):
 
 @pytest.mark.integration
 def test_live_retrieval_spans_disciplines(tmp_path):
-    result = retrieve(CTX, workdir=tmp_path)
+    result = retrieve(CTX, source_discipline="neuroimaging", workdir=tmp_path)
     assert 3 <= len(result.doc_ids) <= MAX_DOCS
     assert len(result.sources) >= 2, f"single-source result: {result.sources}"
     assert all(len(doc_id) > 6 for doc_id in result.doc_ids)
