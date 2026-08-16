@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -61,6 +62,7 @@ def test_help_lists_run_not_score():
     assert result.exit_code == 0, result.output
     assert "run" in result.output
     assert "serve" in result.output
+    assert "sync" in result.output
     assert "score" not in result.output.lower()
     assert "answer" not in result.output.lower()
 
@@ -200,3 +202,73 @@ def test_live_run_writes_artifacts_and_pins_source_discipline(monkeypatch, tmp_p
     assert (out / "report.html").exists()
     assert (out / "report.md").exists()
     assert "arx_one" in (out / "report.html").read_text(encoding="utf-8")
+
+
+def test_replay_report_out_writes_markdown_into_sundial_folder(monkeypatch, tmp_path):
+    from transfer_audit.cli import app
+    from transfer_audit import pc as pc_module
+    from transfer_audit import ingest as ingest_module
+
+    def boom(*_args, **_kwargs):
+        raise AssertionError("replay must not call paperclip or ingest")
+
+    monkeypatch.setattr(pc_module, "pc", boom)
+    monkeypatch.setattr(ingest_module, "build_context", boom)
+    monkeypatch.setattr(ingest_module, "build_context_from_file", boom)
+
+    run = _saved_run(tmp_path)
+    sundial = tmp_path / "sundial" / "my-project"
+    result = CliRunner().invoke(
+        app,
+        ["run", "--replay", str(run), "--report-out", str(sundial)],
+    )
+    assert result.exit_code == 0, result.output
+    handed = sundial / "report.md"
+    assert handed.is_file()
+    md = handed.read_text(encoding="utf-8")
+    assert "<!-- crosswork:entry id=" in md
+    assert "**Target restatement**" in md
+    assert "PMC6925691" in md
+
+
+def test_sync_cli_prints_before_after_and_writes_markdown_source(tmp_path):
+    from transfer_audit.cli import app
+    from transfer_audit.models import LedgerEntry
+    from transfer_audit.report import render_report, write_report
+
+    original = "ICU windows from one stay must not cross the split."
+    corrected = "Splits must be formed at the ICU-stay level."
+    entry = LedgerEntry.model_validate(
+        {
+            "axis": "A_isolation",
+            "subtype": "A4",
+            "status": "UNKNOWN",
+            "source_assumption": "Training and test partitions are formed at the subject level.",
+            "target_restatement": original,
+            "rationale": "The two-sentence target is silent on how streams are partitioned.",
+            "evidence_lines": "L12-L18",
+            "what_would_resolve_it": "Are train and test splits made by patient admission?",
+            "source_doc_id": "arx_2104.10995",
+        }
+    )
+    run = tmp_path / "20260101T120000Z"
+    run.mkdir()
+    (run / "ledger.json").write_text(
+        json.dumps([entry.model_dump()], indent=2) + "\n", encoding="utf-8"
+    )
+    write_report(
+        render_report([entry]), run / "report.html", run / "report.md"
+    )
+    md = (run / "report.md").read_text(encoding="utf-8")
+    (run / "report.md").write_text(md.replace(original, corrected), encoding="utf-8")
+
+    result = CliRunner().invoke(app, ["sync", "--run", str(run)])
+    assert result.exit_code == 0, result.output
+    assert "0 entries unchanged, 1 corrected" in result.output
+    assert original in result.output
+    assert corrected in result.output
+    assert "→" in result.output
+    saved = json.loads((run / "corrections.json").read_text(encoding="utf-8"))
+    assert saved[0]["source"] == "markdown"
+    assert saved[0]["target_restatement"] == corrected
+

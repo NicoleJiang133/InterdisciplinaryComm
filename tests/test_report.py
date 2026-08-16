@@ -115,6 +115,61 @@ def test_markdown_puts_assumption_and_restatement_adjacent():
     assert tgt_at - src_at < 200
 
 
+def test_entry_anchor_id_is_stable_and_derived_from_axis_and_doc():
+    from transfer_audit.report import entry_anchor_id
+
+    entry = _entry(source_doc_id="arx_2104.10995")
+    first = entry_anchor_id(entry)
+    second = entry_anchor_id(
+        _entry(
+            source_doc_id="arx_2104.10995",
+            target_restatement="A different restatement must not change the id.",
+        )
+    )
+    other = entry_anchor_id(_entry(source_doc_id="PMC6925691"))
+    assert first == "A_isolation.arx_2104.10995." + first.rsplit(".", 1)[-1]
+    assert first == second
+    assert first.startswith("A_isolation.arx_2104.10995.")
+    assert len(first.rsplit(".", 1)[-1]) == 4
+    assert first != other
+
+
+def test_markdown_places_stable_anchor_immediately_before_each_entry():
+    from transfer_audit.report import entry_anchor_id
+
+    isolation = _entry(source_doc_id="arx_2104.10995")
+    legitimacy = _entry(
+        axis="B_legitimacy",
+        subtype=None,
+        source_doc_id="PMC6925691",
+        source_assumption="Onset is the antibiotic timestamp.",
+        target_restatement="Labels must not be defined by the treatment timestamp.",
+    )
+    md = render_report([isolation, legitimacy]).markdown
+    for entry in (isolation, legitimacy):
+        comment = f"<!-- crosswork:entry id={entry_anchor_id(entry)} -->"
+        assert comment in md
+        after = md.split(comment, 1)[1]
+        assert after.lstrip().startswith("`")
+        assert entry.source_doc_id in after.split("**Target restatement**")[0]
+        assert entry.status in after.split("**Target restatement**")[0]
+
+
+def test_markdown_restatement_is_editable_prose_not_a_table_cell():
+    restatement = "Independence would have to hold across ICU stays."
+    md = render_report([_entry(target_restatement=restatement)]).markdown
+    _, _, tail = md.partition("**Target restatement**")
+    block = tail.split("**Ask**")[0]
+    assert restatement in block
+    assert "|" not in block
+    assert "<td" not in block.lower()
+    # Identifiers stay on the metadata line, not in the restatement prose.
+    prose = block.strip()
+    assert "arx_example" not in prose
+    assert "UNKNOWN" not in prose
+    assert "L12-L18" not in prose
+
+
 def test_fixture_report_opens_offline_and_ports_canvas_layout(tmp_path):
     rendered = render_fixture()
     html_path, md_path = write_report(

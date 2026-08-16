@@ -90,3 +90,5 @@ def test_corrections_append(tmp_path, monkeypatch):
     assert response.status_code == 200, response.text
     saved = json.loads((run / "corrections.json").read_text(encoding="utf-8"))
     assert saved[0]["target_restatement"] == "corrected restatement"
+    assert saved[0]["source"] == "web"
+    assert saved[0]["timestamp"]

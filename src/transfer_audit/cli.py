@@ -1,8 +1,10 @@
 """T6 — typer entry point.
 
-Live `run --claim-file`, offline `run --replay`, and `serve` for the local UI.
-`--replay` re-renders HTML and Markdown from a saved run and must not call
-Paperclip or Anthropic. `score` and `answer` are not built.
+Live `run --claim-file`, offline `run --replay`, `sync --run` for markdown
+corrections, and `serve` for the local UI. `--replay` re-renders HTML and
+Markdown from a saved run and must not call Paperclip or Anthropic.
+`--report-out` copies report.md into a Sundial workspace folder.
+`score` and `answer` are not built.
 """
 
 from __future__ import annotations
@@ -24,6 +26,7 @@ from transfer_audit.report import (
     write_report,
 )
 from transfer_audit.retrieve import retrieve, write_search
+from transfer_audit.sync import format_sync_summary, sync_run
 
 app = typer.Typer(
     add_completion=False,
@@ -43,7 +46,20 @@ def default_out() -> Path:
     return Path("runs") / stamp
 
 
-def replay_run(run_dir: Path) -> tuple[Path, Path]:
+def _write_report_out(markdown: str, report_out: Path | None) -> Path | None:
+    """Copy report.md into a Sundial workspace folder. No-op when unset."""
+    if report_out is None:
+        return None
+    dest_dir = Path(report_out)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / "report.md"
+    dest.write_text(markdown, encoding="utf-8")
+    return dest
+
+
+def replay_run(
+    run_dir: Path, report_out: Path | None = None
+) -> tuple[Path, Path, Path | None]:
     """Re-render both reports from a saved run. No network."""
     run_dir = Path(run_dir)
     ledger_path = run_dir / "ledger.json"
@@ -62,13 +78,16 @@ def replay_run(run_dir: Path) -> tuple[Path, Path]:
         alignment = load_alignment(align_path)
 
     rendered = render_report(entries, alignment=alignment, context=context)
-    return write_report(rendered, run_dir / "report.html", run_dir / "report.md")
+    html, md = write_report(rendered, run_dir / "report.html", run_dir / "report.md")
+    handed = _write_report_out(rendered.markdown, report_out)
+    return html, md, handed
 
 
 def execute_run(
     claim_file: Path,
     out: Path,
     source_discipline: str | None = None,
+    report_out: Path | None = None,
 ) -> Path:
     """Ingest → retrieve → align → ledger → report. Writes into `out`."""
     out = Path(out)
@@ -96,6 +115,7 @@ def execute_run(
 
     rendered = render_report(entries, alignment=alignment, context=ctx)
     write_report(rendered, out / "report.html", out / "report.md")
+    _write_report_out(rendered.markdown, report_out)
     return out
 
 
@@ -126,6 +146,11 @@ def run(
         "--out",
         help="Run directory. Defaults to runs/<UTC timestamp>.",
     ),
+    report_out: Optional[Path] = typer.Option(
+        None,
+        "--report-out",
+        help="Also write report.md into this folder (a Sundial workspace).",
+    ),
 ) -> None:
     if claim_file is not None and replay is not None:
         typer.echo("provide exactly one of --claim-file or --replay", err=True)
@@ -138,14 +163,23 @@ def run(
         if source_discipline:
             typer.echo("--source-discipline does not apply to --replay", err=True)
             raise typer.Exit(code=2)
-        html, md = replay_run(replay)
+        html, md, handed = replay_run(replay, report_out=report_out)
         typer.echo(f"replay (offline): wrote {html}")
         typer.echo(f"replay (offline): wrote {md}")
+        if handed is not None:
+            typer.echo(f"replay (offline): wrote {handed}")
         return
 
-    dest = execute_run(claim_file, out or default_out(), source_discipline=source_discipline)
+    dest = execute_run(
+        claim_file,
+        out or default_out(),
+        source_discipline=source_discipline,
+        report_out=report_out,
+    )
     typer.echo(f"wrote {dest / 'report.html'}")
     typer.echo(f"wrote {dest / 'report.md'}")
+    if report_out is not None:
+        typer.echo(f"wrote {Path(report_out) / 'report.md'}")
 
 
 @app.command()
@@ -185,6 +219,33 @@ def serve(
         webbrowser.open(url)
     typer.echo(url)
     uvicorn.run("transfer_audit.server:app", host=host, port=port, log_level="info")
+
+
+@app.command()
+def sync(
+    run: Path = typer.Option(
+        ...,
+        "--run",
+        exists=True,
+        file_okay=False,
+        help="Run directory containing ledger.json and report.md.",
+    ),
+    report: Optional[Path] = typer.Option(
+        None,
+        "--report",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="Markdown to read. Defaults to <run>/report.md.",
+    ),
+) -> None:
+    """Read target-restatement edits out of report.md into corrections.json."""
+    try:
+        result = sync_run(run, report=report)
+    except FileNotFoundError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(format_sync_summary(result), nl=False)
 
 
 if __name__ == "__main__":

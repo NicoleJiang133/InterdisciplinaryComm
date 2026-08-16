@@ -4,9 +4,9 @@ Takes a scientific claim that brings a method from one field into another and em
 
 This is a prototype, built in roughly 24 hours, exercised end to end on a single fixture claim.
 
-Interdisciplinary input is what raises the quality of the work. A behavioural question answered with a method from statistical physics, a clinical question answered with machine learning — that is where the strongest results come from. The risk is not using another field's method. The risk is that a method's validity conditions do not travel with it, and neither side owns the interface where they should have been restated. This tool exists to make that high-value work safe to do.
+Interdisciplinary input is what raises the quality of the work. A behavioural question answered with a method from statistical physics, a clinical question answered with machine learning — that is where the strongest results come from. The risk is not that the method came from another field. The risk is that a method's validity conditions do not travel with it, and neither side owns the interface where they should have been restated. This tool exists to make that high-value work safe to do.
 
-That is how the 70% version of a transferred result actually fails. The source condition "the test set must be drawn from the distribution of scientific interest" is stored as "use a held-out test set". Every one of the 329 papers surveyed in Kapoor & Narayanan ([arXiv:2207.07048](https://arxiv.org/abs/2207.07048)) is compliant with the second sentence and in violation of the first.
+The 70% version of a transferred result is how that work actually fails. The source condition "the test set must be drawn from the distribution of scientific interest" is stored as "use a held-out test set". Every one of the 329 papers surveyed in Kapoor & Narayanan ([arXiv:2207.07048](https://arxiv.org/abs/2207.07048)) is compliant with the second sentence and in violation of the first.
 
 ## What it does not do
 
@@ -16,12 +16,12 @@ It generates questions, not verdicts. The source literature already showed these
 
 **Review capacity.** [Sundial](https://www.sundial.md/blog/announcing-sundial) put the bottleneck this way: the length of task an agent can finish on its own roughly doubles every few months, while a human's capacity to review stays constant. We reached the same problem independently. A scientist applying a method from another field cannot review every assumption it carries. Review capacity is the bottleneck — not comprehension, not access to the literature. This tool makes the validity conditions legible: what the source result depends on, what that becomes in the target system, and therefore what to ask.
 
-**Rigour without slowing the work down.** The output is not a verdict that blocks anything. It is a list of questions with citations (`source_doc_id`) and line numbers (`evidence_lines`), so the scientist can resolve them with the collaborator who actually knows.
+**Rigour without slowing the work.** The output is not a verdict that blocks anything. It is a list of questions with citations (`source_doc_id`) and line numbers (`evidence_lines`), so the scientist can resolve them with the collaborator who actually knows.
 
-**Confirmation bias.** A scientist who wants to apply a method is motivated to believe it transfers. Reading the source paper, they look for permission rather than for conditions. CrossWork is structurally adversarial to that in three specific ways:
+**Confirmation bias.** A scientist who wants to apply a method is motivated to believe it transfers, and reads the source paper looking for permission rather than for conditions. CrossWork is structurally adversarial to that in three ways:
 
-- it enumerates conditions exhaustively, independent of what the reader hopes
-- the default status is UNKNOWN, not SATISFIED. Confirmation bias works by treating absence of contrary evidence as confirmation; here absence renders as a visible, answerable question
+- it enumerates conditions exhaustively, regardless of what the reader hopes
+- the default status is UNKNOWN, not SATISFIED, so absence of contrary evidence renders as a visible question instead of quiet confirmation
 - the status contract forbids SATISFIED without positive evidence in the target description (`SATISFIED` only when the target description positively states the condition is met)
 
 This is a design hypothesis, not a measured result. No study has shown that scientists using this tool exhibit less confirmation bias, and claiming otherwise would be exactly the unearned claim this project exists to surface.
@@ -38,14 +38,25 @@ The counter-risk is automation bias: a scientist treating "it did not flag this"
 | retrieve | `retrieve.py` | Paperclip (GXL) | two slot-derived `paperclip search` legs across arXiv, PMC, bioRxiv (`-s arxiv` and `-s pmc,biorxiv`) |
 | align | `align.py` | Paperclip (GXL) | `paperclip map --output-schema` extracts seven structural slots per paper |
 | ledger | `ledger.py` | Paperclip (GXL) | `map` again, schema-constrained, producing `LedgerEntry` objects with doc id (`source_doc_id`) and line range (`evidence_lines`) |
-| report | `report.py` | jinja2 | HTML to read; Markdown as the Sundial handoff |
+| report | `report.py` | jinja2 | HTML to read; Markdown as the Sundial handoff (`report.md`) |
+| sync | `sync.py` | filesystem | re-reads `report.md`, diffs restatements against `ledger.json`, writes `corrections.json` |
 | front-end | `server.py`, `web/` | FastAPI | localhost; runs the five stages live, falls back to a saved run and labels it as saved |
 
 Paperclip auth is OAuth via `paperclip login`, not an API key. Nothing in the codebase handles a Paperclip credential. (`paperclip install` installs the agent skill; it does not authenticate.)
 
-### Where the work goes next
+### Review surface
 
-**Sundial — the review surface.** Sundial's shipped instrument is an editor for Markdown and LaTeX ([sundial.md/editor](https://www.sundial.md/editor)). Sun, a local-first system of record, is unreleased — the homepage describes it and offers no product. Neither generates a report, and CrossWork does not ask them to. CrossWork emits `report.md` in the handoff format: source assumption and target restatement sit adjacent as editable prose, because a scientist correcting a translation is the highest-value input this system can capture. The local front-end already persists those corrections to `corrections.json`. The Sundial editor is where that correction happens with attribution and reversibility. No integration with Sun; it is unreleased.
+**Sundial.** CrossWork emits `report.md`. The scientist opens that file in [Sundial](https://www.sundial.md/blog/announcing-sundial), a collaborative workspace where humans and agents edit the same markdown live — every change tracked, tied to the agent turn that made it, and reviewable at any granularity. Claude Code or Codex connect as collaborators. There is no public API and none is needed: Sundial's integration surface is the file. Each ledger entry in `report.md` carries a stable HTML-comment anchor so an edit is attributable to that entry rather than to a line range. After the scientist corrects a target restatement, `transfer-audit sync --run runs/<ts>` reads the file back, diffs it against `ledger.json`, and writes the change to `corrections.json` with `source` marked `markdown`. Corrections from the local front-end keep `source` marked `web`. Sun, a local-first system of record described on the homepage, is unreleased and untouched.
+
+Write `report.md` straight into a Sundial workspace with `--report-out`:
+
+```bash
+transfer-audit run --claim-file claim.txt --report-out ~/sundial/my-project/
+# edit target restatements in that folder, then:
+transfer-audit sync --run runs/<ts> --report ~/sundial/my-project/report.md
+```
+
+### Where the work goes next
 
 **BenchFlow — the evaluation environment.** This is a roadmap position. The spec exists. The port does not.
 
@@ -61,7 +72,8 @@ What has to happen first: the suite has to grow from 8 cases to several dozen. S
 | `docs/demo.html` | Built. Replays saved runs with no network call. Open the file from disk. |
 | Ingest, retrieve, align, ledger | Built. The alignment gate removes extraction failures (no slots recovered from the paper), not weak analogies. Unmapped slots are aggregated as break points ([architecture](docs/03-architecture.md)). |
 | Report HTML + Markdown | Built. Worked example, break-point table with n in every cell, ledger grouped by axis. Committed fixture: [example-report.html](docs/example-report.html), [example-report.md](docs/example-report.md) (9/9 UNKNOWN). |
-| CLI | `run --claim-file`, `run --replay`, and `serve` built. `--replay` re-renders both reports with no network call. `score` and `answer` are not built. |
+| Sundial round trip | Built. `run --report-out DIR` writes `report.md` into a Sundial workspace. After a target restatement is edited, `transfer-audit sync --run runs/<ts>` writes `corrections.json` with `source=markdown`. Filesystem only; Sun is unreleased and untouched. |
+| CLI | `run --claim-file`, `run --replay`, `run --report-out`, `sync --run`, and `serve` built. `--replay` re-renders both reports with no network call. `score` and `answer` are not built. |
 | Conformance | **5 of 8** on `data/transfer_bench.jsonl`. L2 is 0 of 2. One of the five hits (TB11) was handed over by the claim text. Status: 62 UNKNOWN / 0 SATISFIED / 0 VIOLATED. Report "N of 8", never a rate. L3.1 uncovered. [TransferBench](docs/08-transferbench.md). Scored ad hoc; `eval/score.py` is not in the repo. The number lives in `runs/conformance/results.json`. |
 | Round-trip fidelity check | Not built. That is a separate stage from the alignment gate. |
 | Target-document input | Not built. A two-sentence claim produces 9/9 UNKNOWN, which is the correct answer given that input. |
@@ -97,8 +109,19 @@ cp .env.example .env
 # Local product UI
 .venv/bin/transfer-audit serve
 
+# Static walkthrough: open docs/demo.html from disk (no server)
+
 # Offline: re-render HTML + Markdown from a saved run (no network)
 .venv/bin/transfer-audit run --replay runs/<ts>
+
+# Write report.md into a Sundial workspace
+.venv/bin/transfer-audit run --replay runs/<ts> \
+  --report-out ~/sundial/my-project/
+
+# After editing target restatements in report.md, read them back
+.venv/bin/transfer-audit sync --run runs/<ts>
+.venv/bin/transfer-audit sync --run runs/<ts> \
+  --report ~/sundial/my-project/report.md
 
 # Live run
 .venv/bin/transfer-audit run --claim-file tests/fixtures/target_claim.txt \

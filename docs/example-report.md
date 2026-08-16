@@ -60,11 +60,13 @@ Unmapped slots among extracted papers. Denominator is n=9 in every cell.
 
 ## Ledger by axis
 
-A scientist correcting a translation edits the two prose fields below. Do not overwrite `source_doc_id` or `evidence_lines`.
+Edit the target restatement. Doc ids, evidence lines, and status live in the HTML comment and the metadata line — leave those.
 
 ### A_isolation
 
-#### `arx_2408.02496` — UNKNOWN · A4
+<!-- crosswork:entry id=A_isolation.arx_2408.02496.9dd1 -->
+`arx_2408.02496` · UNKNOWN · A4 · evidence L39
+
 **Source assumption**
 
 The paper isolated 25% of participants from each cohort as an independent test set prior to analysis and stratified the split based on clinical and demographic variables to prevent data leakage.
@@ -77,9 +79,9 @@ Are ICU patient data splits partitioned by patient ID, such that continuous moni
 
 Are ICU patient data splits partitioned by patient ID, such that continuous monitoring windows from the same ICU stay never appear in both the training and testing sets?
 
-`arx_2408.02496` · evidence L39
+<!-- crosswork:entry id=A_isolation.arx_2603.00060.7ec9 -->
+`arx_2603.00060` · UNKNOWN · A4 · evidence L56-L59
 
-#### `arx_2603.00060` — UNKNOWN · A4
 **Source assumption**
 
 The source paper assumes that models evaluated on fMRI data must enforce strict subject-level splitting (Segmentation 2) where all 2D slices from a given subject are confined exclusively to a single partition (train, validation, or test) to prevent severe information leakage from 40 subjects across thousands of extracted slices.
@@ -92,9 +94,9 @@ Are the train, validation, and test partitions formed at the patient level, ensu
 
 Are the train, validation, and test data splits defined strictly by patient admission identifier, such that no ICU stay contributes monitoring windows or sequences to both sides of the split?
 
-`arx_2603.00060` · evidence L56-L59
+<!-- crosswork:entry id=A_isolation.arx_2111.04174.6612 -->
+`arx_2111.04174` · UNKNOWN · A1 · evidence L38
 
-#### `arx_2111.04174` — UNKNOWN · A1
 **Source assumption**
 
 Hyper-parameters and model evaluation were cross-validated using nested 5-fold cross-validation within the pooled discovery dataset of 1151 early AD participants.
@@ -107,9 +109,9 @@ Were the patient monitoring streams partitioned by distinct ICU admissions or pa
 
 Are the train and test splits made by patient admission, so that no ICU stay contributes time windows to both sides?
 
-`arx_2111.04174` · evidence L38
+<!-- crosswork:entry id=A_isolation.PMC8662454.06ac -->
+`PMC8662454` · UNKNOWN · A4 · evidence L37
 
-#### `PMC8662454` — UNKNOWN · A4
 **Source assumption**
 
 The source paper assumes that models can be evaluated using either an 80/20 shuffled split (7100 training and 1845 test datapoints) or a leave-one-subject-out approach where each subject's data (averaging 50 datapoints) is excluded from the training set.
@@ -122,9 +124,9 @@ Are the train and test splits for the sepsis prediction model made by patient ad
 
 Are the train and test splits for the sepsis prediction model made by patient admission, ensuring that no patient's continuous monitoring streams contribute windows to both sides?
 
-`PMC8662454` · evidence L37
+<!-- crosswork:entry id=A_isolation.bio_5e4102086c00.2a3f -->
+`bio_5e4102086c00` · UNKNOWN · A4 · evidence L45
 
-#### `bio_5e4102086c00` — UNKNOWN · A4
 **Source assumption**
 
 Allocating the entirety of each patient record (600 patients for training, 400 patients for testing from MIMIC-III) to either the training or test set to prevent data leakage.
@@ -137,9 +139,9 @@ Are the train and test splits partitioned by patient ID, such that no patient's 
 
 Provide the exact patient-level partitioning protocol used to divide the dataset into training and test folds.
 
-`bio_5e4102086c00` · evidence L45
+<!-- crosswork:entry id=A_isolation.PMC5829820.e622 -->
+`PMC5829820` · UNKNOWN · A4 · evidence L62
 
-#### `PMC5829820` — UNKNOWN · A4
 **Source assumption**
 
 The source paper assumes that patient encounters are randomly split into 80% training and 20% independent test sets across 10-fold cross-validation (L62).
@@ -152,9 +154,9 @@ Are patient admissions or ICU stays strictly partitioned so that no single patie
 
 Are the train and test splits formed at the patient level, ensuring that no patient's ICU stays contribute data to both training and test sets?
 
-`PMC5829820` · evidence L62
+<!-- crosswork:entry id=A_isolation.bio_87c89b478030.1ba3 -->
+`bio_87c89b478030` · UNKNOWN · A4 · evidence L39
 
-#### `bio_87c89b478030` — UNKNOWN · A4
 **Source assumption**
 
 Within each database, data were randomly split into a training set (80%) and a test set (20%) at the ICU-stay level.
@@ -167,11 +169,11 @@ Are the train and test partitions for predicting sepsis split at the patient lev
 
 Are the train and test partitions for predicting sepsis split at the patient level so that no individual patient contributes monitoring streams to both training and testing sets?
 
-`bio_87c89b478030` · evidence L39
-
 ### B_legitimacy
 
-#### `PMC6925691` — UNKNOWN
+<!-- crosswork:entry id=B_legitimacy.PMC6925691.e04d -->
+`PMC6925691` · UNKNOWN · evidence L29
+
 **Source assumption**
 
 The source study defines the sepsis onset target label using the time of antibiotic administration by attending physicians (T0).
@@ -184,11 +186,11 @@ Do the target labels or prediction windows rely on the timing of clinician inter
 
 Were the target sepsis onset labels defined purely by physiological criteria or clinical diagnosis codes independent of the exact timestamp of antibiotic initiation?
 
-`PMC6925691` · evidence L29
-
 ### C_domain_of_validity
 
-#### `arx_2410.00946` — UNKNOWN · C3
+<!-- crosswork:entry id=C_domain_of_validity.arx_2410.00946.a6cc -->
+`arx_2410.00946` · UNKNOWN · C3 · evidence L18
+
 **Source assumption**
 
 The paper assumes a transductive setting where auxiliary factors of testing samples are known beforehand to construct the factor graph.
@@ -200,6 +202,4 @@ Are the auxiliary sociodemographic or clinical risk factors used to build the pa
 **Ask**
 
 Are the auxiliary sociodemographic or clinical risk factors used to build the patient similarity graph completely known and available for all prospective ICU test admissions before generating sepsis predictions?
-
-`arx_2410.00946` · evidence L18
 

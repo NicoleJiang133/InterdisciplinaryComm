@@ -8,6 +8,7 @@ of both formats: source condition, target restatement, therefore the question.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -84,13 +85,34 @@ class RenderedReport(BaseModel):
     metrics: ReportMetrics
 
 
+def entry_anchor_id(entry: LedgerEntry) -> str:
+    """Stable, human-readable id: axis + source_doc_id + a short content hash.
+
+    The hash is over identity fields, not the target restatement, so a scientist
+    correcting the prose does not change the id that attributes the edit.
+    """
+    material = "\n".join(
+        [
+            entry.axis,
+            entry.source_doc_id,
+            entry.subtype or "",
+            entry.evidence_lines or "",
+            entry.source_assumption,
+        ]
+    )
+    digest = hashlib.sha256(material.encode("utf-8")).hexdigest()[:4]
+    return f"{entry.axis}.{entry.source_doc_id}.{digest}"
+
+
 def _env() -> Environment:
-    return Environment(
+    env = Environment(
         loader=FileSystemLoader(TEMPLATES),
         autoescape=lambda name: bool(name and name.endswith(".html.j2")),
         trim_blocks=True,
         lstrip_blocks=True,
     )
+    env.filters["anchor_id"] = entry_anchor_id
+    return env
 
 
 def pick_worked_example(entries: list[LedgerEntry]) -> LedgerEntry | None:

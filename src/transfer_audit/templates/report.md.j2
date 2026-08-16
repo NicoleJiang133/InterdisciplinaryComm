@@ -64,13 +64,14 @@ Unmapped slots among extracted papers. Denominator is n={{ extracted_n }} in eve
 
 ## Ledger by axis
 
-A scientist correcting a translation edits the two prose fields below. Do not overwrite `source_doc_id` or `evidence_lines`.
+Edit the target restatement. Doc ids, evidence lines, and status live in the HTML comment and the metadata line — leave those.
 
 {% for axis, items in grouped %}
 ### {{ axis }}
 
 {% for entry in items %}
-#### `{{ entry.source_doc_id }}` — {{ entry.status }}{% if entry.subtype %} · {{ entry.subtype }}{% endif %}
+<!-- crosswork:entry id={{ entry | anchor_id }} -->
+`{{ entry.source_doc_id }}` · {{ entry.status }}{% if entry.subtype %} · {{ entry.subtype }}{% endif %} · evidence {{ entry.evidence_lines or "not cited" }}
 
 **Source assumption**
 
@@ -85,8 +86,6 @@ A scientist correcting a translation edits the two prose fields below. Do not ov
 
 {{ entry.what_would_resolve_it }}
 {% endif %}
-
-`{{ entry.source_doc_id }}` · evidence {{ entry.evidence_lines or "not cited" }}
 
 {% endfor %}
 {% endfor %}

@@ -75,17 +75,19 @@ Status is about the target. On the two-sentence fixture the ledger is 9/9 UNKNOW
 
 `render_report(entries, alignment=, context=) -> html, markdown`
 
-Self-contained HTML (inline CSS, no CDN, no JS) and a Markdown handoff. Layout is ported from the source-leg-rerun canvas: metric row, break-point table with n in every cell, slot-object panel (oscillator / patch / subject), ledger grouped by axis, status distribution. A worked-example panel at the top of both formats shows the strongest entry as source condition → target restatement → the question. Markdown puts `source_assumption` and `target_restatement` adjacent so a scientist can correct the translation.
+Self-contained HTML (inline CSS, no CDN, no JS) and a Markdown handoff. Layout is ported from the source-leg-rerun canvas: metric row, break-point table with n in every cell, slot-object panel (oscillator / patch / subject), ledger grouped by axis, status distribution. A worked-example panel at the top of both formats shows the strongest entry as source condition → target restatement → the question. Each Markdown ledger entry is preceded by a stable `<!-- crosswork:entry id=… -->` anchor. Target restatement is an editable prose block; doc ids, status, and evidence stay in the comment and a metadata line. `sync` reads those edits back.
 
 Committed examples: [example-report.html](example-report.html), [example-report.md](example-report.md), rendered from the fixture ledger (9/9 UNKNOWN).
 
 ## CLI
 
-`transfer-audit run --claim-file path.txt [--source-discipline X] [--out runs/<ts>]`
+`transfer-audit run --claim-file path.txt [--source-discipline X] [--out runs/<ts>] [--report-out DIR]`
 
-`transfer-audit run --replay runs/<ts>`
+`transfer-audit run --replay runs/<ts> [--report-out DIR]`
 
-`--replay` re-renders `report.html` and `report.md` from a saved run with no network call. Build that path first; it is the demo safety net. `score` and `answer` are not built.
+`transfer-audit sync --run runs/<ts> [--report path/to/report.md]`
+
+`--replay` re-renders `report.html` and `report.md` from a saved run with no network call. `--report-out` also writes `report.md` into a Sundial workspace folder. `sync` re-reads that markdown, diffs each anchored target restatement against `ledger.json`, and appends changes to `corrections.json` (`source=markdown`). `score` and `answer` are not built.
 
 ## Not built
 
@@ -93,4 +95,4 @@ Committed examples: [example-report.html](example-report.html), [example-report.
 - `eval/score.py` — not in the repository. The suite was scored 16 Aug 2026: 5 of 8 (L2 0 of 2; TB11 handed over). Report "N of 8", never a rate. See [08-transferbench.md](08-transferbench.md).
 - Target-document ingest (protocol / preregistration / README)
 - Round-trip fidelity field
-- Answer loop that lets a scientist edit a restatement and persist the correction
+- Answer loop that lets a scientist edit a restatement and persist the correction — the markdown path is built (`sync`); a CLI `answer` command is not

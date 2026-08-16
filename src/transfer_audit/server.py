@@ -6,6 +6,7 @@ import json
 import re
 import shutil
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
 
@@ -40,6 +41,8 @@ class Correction(BaseModel):
     source_doc_id: str
     axis: str
     target_restatement: str
+    source: str = "web"
+    timestamp: str | None = None
 
 
 def _sse(event: str, data: dict) -> str:
@@ -167,7 +170,12 @@ def api_run(req: RunRequest) -> StreamingResponse:
 def api_correct(run_id: str, body: Correction) -> dict:
     path = _run_dir(run_id) / "corrections.json"
     rows = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else []
-    rows.append(body.model_dump())
+    row = body.model_dump()
+    row["source"] = "web"
+    row["timestamp"] = body.timestamp or datetime.now(timezone.utc).strftime(
+        "%Y-%m-%dT%H:%M:%SZ"
+    )
+    rows.append(row)
     path.write_text(json.dumps(rows, indent=2) + "\n", encoding="utf-8")
     return {"ok": True, "n": len(rows)}
 
