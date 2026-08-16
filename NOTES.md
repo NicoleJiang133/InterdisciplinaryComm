@@ -442,3 +442,24 @@ of clean controls with any VIOLATED entry) is measuring whichever one the prompt
 Deciding whether `status` describes the SOURCE paper's own validity or the TARGET's
 ability to satisfy the analogous condition is a product decision, not a prompt tweak,
 and it is still open.
+
+### 13d. `filter` exists but is hidden, and it edits the search in place
+
+`filter` is absent from `paperclip --help`'s command list and `paperclip filter --help`
+says "No help available", but the command runs:
+
+```
+$ paperclip filter --from s_dc130979 --require 2 "paper reports how the data were split"
+Filtered: 5 → 0 papers (5 removed as irrelevant) in 503ms
+  → 0 papers after filtering
+Results ID: s_dc130979 (updated in place)
+ERR: 0 papers after filtering, but --require 2 was specified.
+```
+
+Two cautions before using it to prune weak retrievals. It **updates the result id in
+place**, so the s_* id recorded in search.json no longer denotes what it denoted when the
+run was made, and `map --from` replay stops being reproducible. And it is aggressive:
+that probe removed all five source-leg papers in half a second for a methods-level
+question their abstracts do not answer. After the `--require` failure the stored set was
+still intact on re-export, so the probe did no lasting damage, but a filter call that
+*succeeds* presumably does persist.
