@@ -7,6 +7,7 @@ hold in the target system. It generates the questions, it does not issue verdict
 Literature access is the `paperclip` CLI via subprocess; state is JSON files on disk.
 
 Setup: `python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"`
-Tests: `pytest -m "not integration"` (drop the marker filter to hit the live CLI).
+Ingest needs `ANTHROPIC_API_KEY` (see `.env.example`); Paperclip has no general LLM endpoint.
+Tests: `pytest -m "not integration"` runs with no network, no key (drop the filter to hit both live APIs).
 
 See `BUILD.md` for the build spec and `NOTES.md` for probed CLI behaviour.

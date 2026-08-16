@@ -1,29 +1,64 @@
 """T2 — target description -> TransferContext.
 
-Every value this module produces is a verbatim span of the input text. Nothing is
-inferred, normalised into jargon, or filled from background knowledge: a slot whose
-pattern does not match becomes None, which is the specified behaviour and the honest
-one. A wrong slot silently mis-frames every downstream question in the ledger.
+`build_context()` is the single seam every caller uses. It sends the claim to the
+Anthropic API, because Paperclip's `map` reads PAPERS and cannot read our text at all
+(NOTES.md section 0). This is the only module allowed to touch a non-Paperclip model.
 
-Why there is no LLM call here: BUILD.md asks for one Paperclip call that fills the
-slots, and the CLI cannot do it. `generate-search-config` (the only command that reads
-arbitrary text) is disabled server-side; `map`/`filter`/`reduce` only accept corpus
-search-result sets; and text uploaded to /clipboard/ is searchable but map refuses it
-with "has no loadable full text". All three probes are recorded in NOTES.md section 8.
-If an extraction model becomes available, `build_context` is the single seam to change.
+The extraction rule that matters: a slot the text does not state must come back null.
+An invented slot is worse than a missing one, because T3 queries the corpus by slot and
+T4 audits assumptions against them — one hallucinated readout mis-frames every question
+in the ledger, silently and plausibly.
+
+`build_context_offline()` is a deterministic fallback that extracts only verbatim spans
+by pattern. The unit tests run against it so the suite needs no network and no credits.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
+from typing import Any
 
 from transfer_audit.models import TransferContext
 
+DEFAULT_MODEL = "claude-sonnet-5"
+MAX_TOKENS = 2000
+
+_SYSTEM_PROMPT = """\
+You extract structured slots from a scientific claim that someone is transferring from \
+the discipline where it was established into a new target system.
+
+Return ONLY a single JSON object matching this schema. No prose, no markdown fences.
+
+{schema}
+
+Field meanings:
+- target_claim: the claim being made about the TARGET system, quoted from the input.
+- target_system: the system, population, cohort or setting the claim is applied TO.
+- state_variable: the variable whose state is predicted, classified or measured.
+- perturbation: the intervention, treatment or manipulation applied, if any.
+- readout: the measurement, signal or data source used to evaluate the claim.
+- constraints: stated limits, thresholds, exclusions or eligibility conditions.
+- source_discipline_hint: the NAME of the field or literature the claim is borrowed \
+FROM, a few words at most, such as "neuroimaging" or "labour economics". A description \
+of the source study, its method or its result is NOT a discipline name — if the input \
+does not name a field, this is null.
+
+Rules:
+- Use null for any slot the input does not state. Use [] for empty constraints.
+- Inventing a slot is WORSE than leaving it null. Do not infer a value from background \
+knowledge, do not guess from context, and do not restate one slot inside another to \
+avoid a null. A null is a correct and expected answer.
+- Prefer the input's own wording over your paraphrase.
+- target_claim and target_system are the only required fields. If the input genuinely \
+does not name a target system, return null for it and the caller will handle it.\
+"""
+
 
 class IngestError(ValueError):
-    """The text does not state something the ledger cannot be built without."""
+    """The text could not be turned into a usable TransferContext."""
 
 
 # A transfer claim has two halves joined by an inference marker: the source result,
@@ -119,11 +154,90 @@ def _search(pattern: re.Pattern[str], text: str) -> str | None:
     return found.group(1).strip(" ,.;") if found else None
 
 
-def build_context(text: str, *, target_system: str | None = None) -> TransferContext:
+def build_context(
+    text: str,
+    *,
+    target_system: str | None = None,
+    model: str = DEFAULT_MODEL,
+    client: Any | None = None,
+) -> TransferContext:
     """Fill the TransferContext slots from a free-text target description.
 
-    Unmatched slots are None. `target_system` may be supplied by the operator when the
-    text does not name one; without it, ingest fails loudly rather than inventing one.
+    One model call, no retry loop — Paperclip's correction pass has no equivalent here
+    and BUILD.md puts self-correction loops out of scope. Slots the text does not state
+    come back None. `target_system` overrides whatever the model returns, for the case
+    where an operator knows the target and the text is vague.
+    """
+    claim = _normalise(text)
+    if not claim:
+        raise IngestError("empty target description")
+
+    payload = _extract_slots(claim, model=model, client=client)
+
+    if target_system:
+        payload["target_system"] = target_system
+    if not payload.get("target_claim"):
+        payload["target_claim"] = claim
+    if payload.get("constraints") is None:
+        payload["constraints"] = []
+    if not payload.get("target_system"):
+        raise IngestError(
+            "the text does not name a target system. State it explicitly (for example "
+            "'in ICU patients') or pass target_system= to build_context()."
+        )
+
+    try:
+        return TransferContext.model_validate(payload)
+    except Exception as exc:
+        raise IngestError(f"model returned a payload that is not a TransferContext: {exc}") from exc
+
+
+def _extract_slots(claim: str, *, model: str, client: Any | None) -> dict[str, Any]:
+    """One Anthropic call. Returns the raw slot dict; validation is the caller's job."""
+    if client is None:
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise IngestError(
+                "ANTHROPIC_API_KEY is not set. Ingest needs it because Paperclip has no "
+                "general LLM endpoint (NOTES.md section 0). Use build_context_offline() "
+                "for a deterministic, lower-quality extraction without credentials."
+            )
+        from anthropic import Anthropic
+
+        client = Anthropic()
+
+    schema = json.dumps(TransferContext.model_json_schema(), indent=2)
+    response = client.messages.create(
+        model=model,
+        max_tokens=MAX_TOKENS,
+        system=_SYSTEM_PROMPT.format(schema=schema),
+        messages=[{"role": "user", "content": claim}],
+    )
+    return _parse_json_object(_response_text(response))
+
+
+def _response_text(response: Any) -> str:
+    parts = [getattr(block, "text", "") for block in getattr(response, "content", [])]
+    return "".join(parts).strip()
+
+
+def _parse_json_object(raw: str) -> dict[str, Any]:
+    text = raw.strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.MULTILINE).strip()
+    try:
+        payload = json.loads(text)
+    except ValueError as exc:
+        raise IngestError(f"model did not return JSON: {raw[:300]!r}") from exc
+    if not isinstance(payload, dict):
+        raise IngestError(f"model returned {type(payload).__name__}, expected a JSON object")
+    return payload
+
+
+def build_context_offline(text: str, *, target_system: str | None = None) -> TransferContext:
+    """Deterministic fallback: verbatim spans only, no model, no network.
+
+    Lower quality than build_context() by design — it only recognises the phrasings
+    encoded below and returns None for everything else. Used by the unit tests.
     """
     claim = _normalise(text)
     if not claim:
@@ -153,8 +267,9 @@ def build_context(text: str, *, target_system: str | None = None) -> TransferCon
     )
 
 
-def build_context_from_file(path: Path, **kwargs) -> TransferContext:
-    return build_context(Path(path).read_text(encoding="utf-8"), **kwargs)
+def build_context_from_file(path: Path, *, offline: bool = False, **kwargs) -> TransferContext:
+    builder = build_context_offline if offline else build_context
+    return builder(Path(path).read_text(encoding="utf-8"), **kwargs)
 
 
 def write_context(ctx: TransferContext, path: Path) -> Path:
@@ -167,5 +282,7 @@ def write_context(ctx: TransferContext, path: Path) -> Path:
 if __name__ == "__main__":
     import sys
 
-    source = Path(sys.argv[1] if len(sys.argv) > 1 else "tests/fixtures/target_claim.txt")
-    print(build_context_from_file(source).model_dump_json(indent=2))
+    args = [a for a in sys.argv[1:] if a != "--offline"]
+    source = Path(args[0] if args else "tests/fixtures/target_claim.txt")
+    ctx = build_context_from_file(source, offline="--offline" in sys.argv)
+    print(ctx.model_dump_json(indent=2))
