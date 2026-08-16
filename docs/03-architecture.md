@@ -29,7 +29,7 @@ Slots the text does not state come back null. Inventing a slot is worse than lea
 
 Two search legs, split by **role**, not by venue. Searching one query against `arxiv` and against `pmc,biorxiv` returns the same discipline from different journals. The audit then only ever sees the target half of the transfer.
 
-- Source leg: queries `source_discipline_hint` for validity conditions and external-cohort evaluation, on `arxiv`.
+- Source leg: queries the source field's objects and mechanisms, then the regimes, limits, and assumptions under which the result holds, on `arxiv`. Classifies each hit as in-discipline or generic; warns when in-discipline falls below half.
 - Target leg: queries the target slots, on `pmc,biorxiv`.
 
 Cap 10 documents, merged round-robin. Doc ids are read from `paperclip results <s_id> --save` CSVs, never from stdout, where they are truncated. `paperclip filter` is not used: it rewrites the stored result set in place and would break replay.
@@ -42,7 +42,7 @@ A doc-id denylist exists as an escape hatch. It is not the mechanism that holds 
 
 Built. This is the missing step that retrieve-then-ledger did not have.
 
-Each retrieved paper is mapped for seven slots (system, state_variable, perturbation, readout, constraints, failure_mode, isolation_unit). Comparison against the target context is deterministic:
+Each retrieved paper is mapped for seven slots (system, state_variable, perturbation, readout, constraints, failure_mode, isolation_unit). The extract prompt defines each slot by role, with ML as one example among several — `isolation_unit` is the unit across which independence is assumed, not specifically a train/test split. Comparison against the target context is deterministic:
 
 - **mapped** — paper instantiates the slot and the target has a counterpart. A precise restatement is possible.
 - **unmapped** — paper instantiates the slot and the target is silent. A break point.
@@ -73,7 +73,7 @@ Status is about the target. On the two-sentence fixture the ledger is 9/9 UNKNOW
 
 ## Not built
 
-- HTML report
+- HTML report (T5). Do not design from scratch. The live canvas — slot-object comparison (oscillator / patch / subject), break-point tables with n in the figure, extraction rates — is the layout to port.
 - CLI (`run`, `score`, `--replay`)
 - `eval/score.py` — recall against `data/ground_truth.csv` has never been computed
 - Target-document ingest (protocol / preregistration / README)

@@ -26,8 +26,22 @@ Translation fidelity is therefore not an aid to the audit. It is the mechanism o
 
 Unmapped structural slots — places where the source instantiates a condition and the target has no counterpart — are not a tool failure. They are where the transfer is most likely to break, and they must be shown to the scientist. See [03-architecture.md](03-architecture.md) for the alignment gate that reports them.
 
+## Same slot, different ontology
+
+`isolation_unit` is the unit across which independence is assumed. Filled from papers, it is:
+
+| Neuroimaging | Statistical physics | Optimal foraging |
+|---|---|---|
+| subject | oscillator, or a realisation of the noise | patch, or forager |
+
+Same slot. Different object. Structure preserved. That is the fidelity argument as a live row, not a slogan.
+
+If the scientist stores "split by subject", they have the 70% version of a condition that, in Kuramoto, was "do not mix realisations of the noise." A restatement that cannot carry the object's name cannot be checked. `target_restatement` exists to carry it.
+
+n=4 extracted source-leg papers per out-of-domain run, plus the fixture. Small enough to say, specific enough to demonstrate.
+
 ## What this is not
 
 The tool generates questions, not verdicts. The source paper of the benchmark already showed that these errors cannot be caught by reading papers. Any claim that the system *detects* leakage from text is wrong. UNKNOWN with a specific, answerable `what_would_resolve_it` is a success state.
 
-This argument was developed against one fixture (an fMRI-connectivity classifier transferred onto ICU sepsis prediction) and one survey paper. It has not been tested on claims outside that pair. That test is on the [roadmap](06-roadmap.md).
+This argument was developed against one fixture (an fMRI-connectivity classifier transferred onto ICU sepsis prediction) and one survey paper. The slot-object row above is the first out-of-domain check: Kuramoto coupling → meadow flowering, and the marginal value theorem → ribosome unbinding, n=4 extracted source-leg papers each. The ontology changed; the slot did not.

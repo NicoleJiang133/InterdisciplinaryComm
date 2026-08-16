@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from pathlib import Path
 
 import pytest
@@ -9,7 +10,9 @@ from transfer_audit import retrieve as retrieve_module
 from transfer_audit.models import TransferContext
 from transfer_audit.retrieve import (
     DEFAULT_DENY,
+    IN_DISCIPLINE_FLOOR,
     MAX_DOCS,
+    METHODS_CLUSTER,
     RetrievalError,
     find_sources,
     retrieve,
@@ -27,6 +30,10 @@ CTX = TransferContext(
     state_variable="development of sepsis",
     readout="continuous vital-sign monitoring streams",
     source_discipline_hint="neuroimaging",
+    source_result=(
+        "A random-forest classifier trained on resting-state fMRI connectivity "
+        "matrices predicts conversion to Alzheimer's disease with 92% accuracy"
+    ),
 )
 
 # stdout deliberately carries TRUNCATED ids, as the real CLI does.
@@ -52,12 +59,20 @@ ROWS = {
 }
 
 
+MAP_STDOUT = """Map complete: 2/2 papers
+Results ID: m_6cdc3b5c
+
+[1.0s, saved to m_6cdc3b5c]
+"""
+
+
 class FakePc:
     """Stands in for the paperclip CLI: prints truncated ids, exports full ones."""
 
-    def __init__(self, stdouts=None, rows=None):
+    def __init__(self, stdouts=None, rows=None, labels=None):
         self.stdouts = list(stdouts if stdouts is not None else [ARXIV_STDOUT, PMC_STDOUT])
         self.rows = rows if rows is not None else ROWS
+        self.labels = labels or "in_discipline"
         self.calls: list[tuple[str, ...]] = []
         self._search_count = 0
 
@@ -68,14 +83,32 @@ class FakePc:
             stdout = self.stdouts[self._search_count % len(self.stdouts)]
             self._search_count += 1
             return stdout
+        if args[0] == "map":
+            return MAP_STDOUT
         if args[0] == "results":
-            search_id, path = args[1], Path(args[3])
+            result_id, path = args[1], Path(args[3])
+            if result_id.startswith("m_"):
+                path.write_text(self._classify_export(), encoding="utf-8")
+                return f"Saved to {path}\n"
             with path.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.DictWriter(handle, fieldnames=["title", "id", "source"])
                 writer.writeheader()
-                writer.writerows(self.rows.get(search_id, []))
+                writer.writerows(self.rows.get(result_id, []))
             return f"Saved to {path}\n"
         raise AssertionError(f"unexpected paperclip call: {args}")
+
+    def _classify_export(self) -> str:
+        rows = self.rows.get("s_403f175a", [])
+        blocks = []
+        for index, row in enumerate(rows, 1):
+            label = self.labels[row["id"]] if isinstance(self.labels, dict) else self.labels
+            payload = json.dumps({"label": label, "reason": "test"})
+            blocks.append(
+                f"--- [{index}] [success] {row['title']} ---\n"
+                f"doc_id: {row['id']}\n"
+                f"{payload}\n"
+            )
+        return "\n".join(blocks)
 
 
 @pytest.fixture
@@ -98,6 +131,15 @@ def test_source_query_falls_back_when_no_discipline_hint(capsys):
     ctx = CTX.model_copy(update={"source_discipline_hint": None})
     query = source_query(ctx)
     assert "neuroimaging" not in query
+    assert "resting-state fMRI" in query
+    assert "no source discipline" in capsys.readouterr().err
+    lowered = query.lower()
+    assert not any(term in lowered for term in METHODS_CLUSTER)
+
+
+def test_source_query_falls_back_to_target_slots_without_source_objects(capsys):
+    ctx = CTX.model_copy(update={"source_discipline_hint": None, "source_result": None})
+    query = source_query(ctx)
     assert "development of sepsis" in query
     assert "no source discipline" in capsys.readouterr().err
 
@@ -144,10 +186,31 @@ def test_the_two_metaphor_papers_are_denied_by_default():
     assert {"arx_2204.07005", "arx_2509.07237"} <= set(DEFAULT_DENY)
 
 
-def test_source_query_asks_for_stated_validity_conditions():
+def test_source_query_leads_with_discipline_and_source_objects():
     query = source_query(CTX)
-    assert "inclusion criteria" in query
-    assert "train-test split" in query
+    assert query.startswith("neuroimaging:")
+    assert "resting-state fMRI" in query
+    assert "regimes, limits, and assumptions" in query
+    lowered = query.lower()
+    assert not any(term in lowered for term in METHODS_CLUSTER)
+
+
+def test_source_query_does_not_use_train_test_vocabulary_outside_ml():
+    ctx = CTX.model_copy(
+        update={
+            "source_discipline_hint": "statistical physics",
+            "source_result": (
+                "Kuramoto mean-field coupling of noisy oscillators predicts "
+                "the onset of firefly flash synchrony"
+            ),
+        }
+    )
+    query = source_query(ctx, "statistical physics")
+    assert query.startswith("statistical physics:")
+    assert "Kuramoto" in query
+    assert "noisy oscillators" in query
+    lowered = query.lower()
+    assert not any(term in lowered for term in METHODS_CLUSTER)
 
 
 def test_ids_come_from_the_csv_not_from_stdout(fake_pc, tmp_path):
@@ -166,7 +229,7 @@ def test_fans_out_across_both_source_groups(fake_pc, tmp_path):
 
 def test_every_search_is_followed_by_a_results_export(fake_pc, tmp_path):
     result = retrieve(CTX, workdir=tmp_path)
-    exported = [call[1] for call in fake_pc.calls if call[0] == "results"]
+    exported = [call[1] for call in fake_pc.calls if call[0] == "results" and call[1].startswith("s_")]
     assert exported == result.search_ids == ["s_403f175a", "s_72ddd280"]
 
 
@@ -244,6 +307,45 @@ def test_write_search_persists_ids_for_t4(fake_pc, tmp_path):
     written = path.read_text(encoding="utf-8")
     assert "s_403f175a" in written
     assert "arx_2103.16685" in written
+
+
+def test_source_leg_is_classified_and_recorded(fake_pc, tmp_path):
+    result = retrieve(CTX, workdir=tmp_path)
+    assert result.source_leg_check is not None
+    assert result.source_leg_check.in_discipline == 2
+    assert result.source_leg_check.generic == 0
+    assert result.source_leg_check.below_floor is False
+    arxiv = [doc for doc in result.documents if doc.search_id == "s_403f175a"]
+    assert all(doc.discipline_label == "in_discipline" for doc in arxiv)
+    assert any(call[0] == "map" for call in fake_pc.calls)
+
+
+def test_generic_majority_warns_loudly(monkeypatch, tmp_path, capsys):
+    fake = FakePc(labels="generic")
+    monkeypatch.setattr(retrieve_module, "pc", fake)
+    result = retrieve(CTX, workdir=tmp_path)
+    err = capsys.readouterr().err
+    assert "below half" in err
+    assert "not field evidence" in err
+    assert result.source_leg_check is not None
+    assert result.source_leg_check.below_floor is True
+    assert result.source_leg_check.in_discipline / (
+        result.source_leg_check.in_discipline + result.source_leg_check.generic
+    ) < IN_DISCIPLINE_FLOOR
+
+
+def test_even_split_does_not_warn(monkeypatch, tmp_path, capsys):
+    fake = FakePc(
+        labels={"arx_2103.16685": "in_discipline", "arx_2410.00946": "generic"}
+    )
+    monkeypatch.setattr(retrieve_module, "pc", fake)
+    result = retrieve(CTX, workdir=tmp_path)
+    err = capsys.readouterr().err
+    assert "below half" not in err
+    assert result.source_leg_check is not None
+    assert result.source_leg_check.below_floor is False
+    assert result.source_leg_check.in_discipline == 1
+    assert result.source_leg_check.generic == 1
 
 
 @pytest.mark.integration

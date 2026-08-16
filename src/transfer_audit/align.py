@@ -44,7 +44,8 @@ from transfer_audit.retrieve import Retrieval, SourceDoc
 # structurally untestable on this fixture.
 MIN_EXTRACTION_QUALITY = 1
 
-# Tie-break when two slots are equally universal: isolation_unit is the 70% gap.
+# Tie-break only, when two slots are equally universal. Not a claim that this
+# slot is the field headline — that was a property of ML literature.
 _BREAK_PRIORITY = {
     "isolation_unit": 0,
     "constraints": 1,
@@ -56,17 +57,29 @@ Read this paper and fill the seven structural slots of ITS OWN study. \
 Use the paper's wording. Use null for any slot the paper does not instantiate. \
 Do not describe the target. Do not invent a counterpart.
 
-  system: the population, cohort, organism or setting the result is about.
-  state_variable: the variable whose state is predicted, classified or measured.
-  perturbation: the intervention or manipulation, if any.
-  readout: the signal, instrument or data source the result is read from.
-  constraints: stated inclusion criteria, exclusions, eligibility, or stated \
-limits, as one short string. Null if none are stated.
-  failure_mode: what going wrong looks like in this paper (a missed converter, \
-a false alarm, a wrong class). Null if the paper does not define one.
-  isolation_unit: the unit that must not appear on both sides of a train/test \
-or discovery/validation split (subject, patient, admission, site, scan, \
-family, batch). Null if the paper does not say.
+Each slot is a ROLE, not an ML term. Fill it with this paper's own objects. \
+The parentheticals show how the same role appears in different fields; they \
+are examples, not a checklist. If the paper states the role in other terms, \
+use those terms.
+
+  system: what the result is about — the entities, ensemble, or setting.
+    (a patient cohort; an ensemble of oscillators; a forager in a patch)
+  state_variable: the quantity whose state the result concerns.
+    (a predicted outcome; an order parameter or phase; a leaving time)
+  perturbation: what is varied, applied, or driven to produce the result.
+    (an intervention or treatment; a control parameter, coupling strength, \
+driving term, or noise intensity; a depletion schedule)
+  readout: how the result is observed or recorded.
+    (a feature matrix or vital-sign stream; a time series of phases; dwell times)
+  constraints: stated conditions under which the result is claimed to hold.
+    (inclusion criteria; a weak-coupling or thermodynamic-limit regime; \
+complete information)
+  failure_mode: what it looks like when the result does not obtain.
+    (a missed class or false alarm; a failed onset of synchrony; leaving too early)
+  isolation_unit: the unit across which independence is assumed — the thing \
+that must not be mixed if the result is to mean what it says.
+    (a subject on both sides of a train/test split; an oscillator, an ensemble \
+member, or a realisation of the noise; a forager or a patch)
 """
 
 

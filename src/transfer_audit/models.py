@@ -41,6 +41,7 @@ class TransferContext(BaseModel):
     readout: str | None = None
     constraints: list[str] = []
     source_discipline_hint: str | None = None
+    source_result: str | None = None
     failure_mode: str | None = None
     isolation_unit: str | None = None
 

@@ -41,6 +41,27 @@ Two papers (`arx_2204.07005`, interpretability of ML in neuroimaging; `arx_2509.
 
 The alignment gate now holds them out with mapped=0, denylist empty, on one live run. That is the mechanism the denylist was faking. The denylist remains as an escape hatch, not as the design.
 
+## Role-split retrieval assumes a shared methodological vocabulary. It does not have one
+
+The source-leg query was written as if every discipline discusses validity the way ML and clinical prediction do: external cohorts, inclusion criteria, train-test split. Prefix the field name, keep that vocabulary, and you have queried the source half of the transfer.
+
+That assumption is false outside ML-adjacent fields. The same template, classified by whether the paper's subject matter is the pinned discipline or a generic methods paper:
+
+| Run | Pin | In-discipline | Generic |
+|---|---|---|---|
+| Fixture | `neuroimaging` | 5/5 | 0/5 |
+| Run A | `statistical physics` | 0/5 | 5/5 |
+
+Run A asked for Kuramoto, oscillators, synchronisation. It returned none of those. It returned clinical-prediction methodology papers. The same paper, `arx_2604.16537` (robustifying prognostic models), appeared in three unrelated runs — A (physics → phenology), B (foraging → ribosome), and C (lensing → cryo-EM). That repetition is the fingerprint: the query language *is* the clinical-prediction cluster on arXiv, and the discipline prefix does not move you out of it.
+
+Statistical physics has validity conditions. They live in the physics — regimes, limits, assumptions on the coupling — not in a separate methods genre about generalisation. A query that can only hear "train-test split" cannot retrieve them. The role-split design then silently audits the wrong literature, and the break-point table reports a property of clinical prediction, not of the field the result was borrowed from.
+
+This was caught by hand. An automatic in-discipline check on the source leg is the cheap guard; rewriting the query so the field's objects lead and validity conditions follow, in that field's terms, is the fix. The finding is the broken assumption, not the missing guard.
+
+The same assumption was baked into extraction. After the source-leg rewrite, run A went from 0/5 to 5/5 in-discipline Kuramoto papers — and **3/5 of those papers extracted nothing**, as did 3/5 of the foraging papers on run B. A 60% failure rate on papers that state their assumptions. The seven-slot schema is ML ontology: `isolation_unit` is defined as the thing that must not cross a train/test split. A Kuramoto paper has coupling strength, a noise term, and a critical point. It has no training set, so the extractor returns nulls, `extraction_quality` is 0, and the paper is held out. Fixing retrieval exposed the bias; it did not remove it.
+
+`isolation_unit`'s absence from those break-point tables is therefore not evidence about physics or foraging. It is extraction failure. Do not report it as a field property. The slot's role — the unit across which independence is assumed — exists in those fields (the oscillator, the ensemble member, the realisation of the noise; the forager, the patch). The prompt could not hear it.
+
 ## Constraints that are not findings about the domain
 
 These shaped the code and will shape anyone else's:

@@ -113,6 +113,7 @@ TransferContext (produced by ingest.py):
   readout: str | None
   constraints: list[str] = []
   source_discipline_hint: str | None = None
+  source_result: str | None = None  # source half of the claim; objects/mechanisms
   failure_mode: str | None = None
   isolation_unit: str | None = None
 
@@ -207,10 +208,15 @@ tried and rejected: it returns the same discipline from different journals, so
 the audit only ever sees the target half of the transfer. See NOTES.md section
 11 for the probe. The two legs ask different questions:
 
-  source leg — queries source_discipline_hint for the validity conditions of the
-  field the result was borrowed FROM:
-    paperclip search "<discipline>: validity conditions and cohort generalisation
-    required when a trained model is applied to a new population" -s arxiv -n 5
+  source leg — queries the source field's own objects and mechanisms first, then
+  the conditions under which that result holds, in the field's terms, on arxiv:
+    paperclip search "<discipline>: <source objects>; regimes, limits, and
+    assumptions under which the result holds" -s arxiv -n 5
+  Do not lead with external-cohort / inclusion-criteria / train-test language.
+  That vocabulary is the clinical-prediction cluster; a discipline prefix does
+  not leave it. See docs/05-findings.md. After search, classify each source-leg
+  paper in-discipline or generic and warn on stderr when in-discipline < half.
+  Below that floor, the break-point table is not field evidence.
 
   target leg — queries the target slots (state_variable, target_system, readout,
   perturbation, constraints) for the literature the claim is applied TO:
@@ -219,17 +225,18 @@ the audit only ever sees the target half of the transfer. See NOTES.md section
 source_discipline_hint is load-bearing for this and the extractor infers it only
 ~4 runs in 5 (NOTES.md section 12), so it is operator-overridable: find_sources
 takes source_discipline=, and T6 exposes --source-discipline. Precedence is
-override, then the inferred slot. With neither, the source leg falls back to a
-methods framing of the target slots and warns loudly on stderr — that run still
-returns two sources but is topically narrower, and the operator should know.
+override, then the inferred slot. With neither, the source leg falls back to the
+source objects if known, otherwise the target slots, still without methods
+vocabulary, and warns loudly on stderr — that run still returns two sources but
+is topically narrower, and the operator should know.
 
 Prune weak retrievals at query-construction time, never with `paperclip filter`:
 filter rewrites the stored result set in place, which breaks `map --from` and so
-breaks T6 --replay (NOTES.md section 13d). The source-leg query therefore asks
-for studies that STATE their inclusion criteria, split and external-cohort
-performance, which excludes conceptual guides that offer only metaphors. A
-doc-id denylist (retrieve.DEFAULT_DENY, overridable via deny=) is the escape
-hatch for papers that survive the query and still produce nothing auditable.
+breaks T6 --replay (NOTES.md section 13d). Do not prune by asking for inclusion
+criteria and train-test splits: that language retrieves a methods genre, not
+auditable source papers, once the pin leaves ML-adjacent fields. Weak papers
+that survive are held out by align (extraction_quality 0). A doc-id denylist
+(retrieve.DEFAULT_DENY, overridable via deny=) is the escape hatch.
 
 Cap total at 10 documents. Paperclip docs are explicit that map is fast only on
 3-10 papers. Do not raise this cap; it will make the demo time out. Merge the
@@ -242,7 +249,12 @@ M2 align.py — score_alignment(ctx, retrieval) -> AlignmentReport.
 Sits between T3 and T4. For each retrieved paper, extract the seven structural
 slots (system, state_variable, perturbation, readout, constraints,
 failure_mode, isolation_unit) from the paper itself via map, then compare
-each slot against the target context. Comparison is deterministic:
+each slot against the target context. Slot names are stable; their meanings
+in the extract prompt are roles, not ML terms. isolation_unit is the unit
+across which independence is assumed (subject, oscillator, forager), not
+specifically a train/test split. perturbation is what is varied or driven
+(an intervention, a control parameter, a depletion schedule). ML phrasing
+is one example among several. Comparison is deterministic:
 
   mapped    paper instantiates the slot AND the target has a counterpart
   unmapped  paper instantiates the slot AND the target has no counterpart

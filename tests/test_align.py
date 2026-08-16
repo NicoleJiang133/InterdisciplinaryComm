@@ -180,3 +180,16 @@ def test_target_protocol_clears_break_points():
     )
     assert scored.break_richness == 0
     assert summarise_break_points([scored], ctx) == []
+
+
+def test_extract_prompt_defines_slots_by_role_not_ml_ontology():
+    from transfer_audit.align import _EXTRACT_QUERY
+
+    query = _EXTRACT_QUERY.lower()
+    assert "each slot is a role" in query
+    assert "unit across which independence is assumed" in query
+    assert "control parameter" in query
+    # ML remains an example, not the definition
+    assert "train/test" in query
+    assert "ensemble of oscillators" in query
+    assert "forager" in query

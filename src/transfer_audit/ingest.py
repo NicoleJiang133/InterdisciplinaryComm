@@ -148,6 +148,19 @@ def _target_clause(text: str) -> str:
     return text[markers[-1].end() :].strip()
 
 
+def source_clause(text: str) -> str | None:
+    """The half that states the borrowed result — the source's objects and mechanisms.
+
+    Filled from the original text, not by the slot extractor. The extractor is
+    target-sided; this clause is what the source-leg query needs to lead with.
+    """
+    markers = list(_TRANSFER_MARKER.finditer(text))
+    if not markers:
+        return None
+    clause = text[: markers[-1].start()].strip(" ,.;")
+    return clause or None
+
+
 def _first_match(patterns, text: str) -> str | None:
     for pattern in patterns:
         found = pattern.search(text)
@@ -194,9 +207,11 @@ def build_context(
         )
 
     try:
-        return TransferContext.model_validate(payload)
+        ctx = TransferContext.model_validate(payload)
     except Exception as exc:
         raise IngestError(f"model returned a payload that is not a TransferContext: {exc}") from exc
+    # Deterministic: the source half of the original text, not a model paraphrase.
+    return ctx.model_copy(update={"source_result": source_clause(claim)})
 
 
 def _extract_slots(claim: str, *, model: str, client: Any | None) -> dict[str, Any]:
@@ -271,6 +286,7 @@ def build_context_offline(text: str, *, target_system: str | None = None) -> Tra
         readout=_search(_READOUT_PATTERN, clause),
         constraints=constraints,
         source_discipline_hint=_search(_SOURCE_DISCIPLINE_PATTERN, claim),
+        source_result=source_clause(claim),
     )
 
 

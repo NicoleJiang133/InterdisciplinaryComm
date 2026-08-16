@@ -8,6 +8,12 @@ ledger that can only ask questions about one half.
 Queries are built from schema slots, never from a keyword string, so the query says
 what the claim structurally IS rather than which words it happens to contain.
 
+The source-leg query leads with the field's own objects and mechanisms, then asks
+about the conditions under which the result holds — in that field's terms. A methods
+vocabulary (external cohort, inclusion criteria, train-test split) is itself the
+clinical-prediction cluster on arXiv; prefixing a discipline name does not leave it.
+See docs/05-findings.md.
+
 Doc ids never come from the CLI's stdout — displayed ids are truncated there
 (NOTES.md section 4c). Every search is followed by `results <s_id> --save`, and the ids
 are read out of that CSV. Only the s_* result id itself is read from stdout, which is
@@ -17,14 +23,18 @@ safe: it is printed in full.
 from __future__ import annotations
 
 import csv
+import json
 import re
 import sys
 import tempfile
 from collections.abc import Collection
 from pathlib import Path
+from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
+from transfer_audit.ingest import source_clause
+from transfer_audit.ledger import MAP_TIMEOUT, WORKER, parse_map_blocks, parse_map_id, payload_json
 from transfer_audit.models import TransferContext
 from transfer_audit.pc import pc
 
@@ -32,6 +42,7 @@ from transfer_audit.pc import pc
 MAX_DOCS = 10
 PER_SEARCH = 5
 MIN_DOCS = 3
+IN_DISCIPLINE_FLOOR = 0.5
 
 # Escape hatch for papers that survive the query but yield only metaphors. Pruning
 # happens here, at query-construction time, and never with `paperclip filter`: filter
@@ -52,6 +63,25 @@ DEFAULT_DENY = frozenset(
 
 _SEARCH_ID = re.compile(r"\bs_[0-9a-f]{6,}\b")
 
+# The vocabulary that IS the clinical-prediction cluster. A source-leg query containing
+# these lands there regardless of the discipline prefix (docs/05-findings.md).
+METHODS_CLUSTER = (
+    "external cohort",
+    "inclusion criteria",
+    "train-test",
+    "train test",
+    "held-out",
+    "held out",
+    "data leakage",
+    "prediction models evaluated",
+)
+
+_VALIDITY_IN_FIELD_TERMS = (
+    "regimes, limits, and assumptions under which the result holds"
+)
+
+DisciplineLabel = Literal["in_discipline", "generic"]
+
 
 class RetrievalError(RuntimeError):
     """Retrieval produced too little to build a ledger from."""
@@ -62,6 +92,25 @@ class SourceDoc(BaseModel):
     source: str
     title: str
     search_id: str
+    discipline_label: DisciplineLabel | None = None
+
+
+class SourceLegCheck(BaseModel):
+    """In-discipline vs generic classification of the arxiv source leg."""
+
+    discipline: str
+    in_discipline: int
+    generic: int
+    unclassified: int
+    labels: dict[str, DisciplineLabel]
+    below_floor: bool
+
+
+class _PaperLabel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    label: DisciplineLabel
+    reason: str
 
 
 class Retrieval(BaseModel):
@@ -71,6 +120,7 @@ class Retrieval(BaseModel):
     search_ids: list[str]
     documents: list[SourceDoc]
     queries: dict[str, str]
+    source_leg_check: SourceLegCheck | None = None
 
     @property
     def sources(self) -> set[str]:
@@ -96,35 +146,168 @@ def target_query(ctx: TransferContext) -> str:
     return query
 
 
-def source_query(ctx: TransferContext, source_discipline: str | None = None) -> str:
-    """The validity conditions of the discipline the result was borrowed from.
+def source_objects(ctx: TransferContext) -> str | None:
+    """The source result's own objects and mechanisms, not the target's."""
+    raw = ctx.source_result.strip() if ctx.source_result and ctx.source_result.strip() else None
+    if raw is None:
+        raw = source_clause(ctx.target_claim)
+    if not raw:
+        return None
+    return " ".join(raw.split())
 
-    Precedence is override, then the inferred slot. The extractor supplies the slot
-    only about four runs in five (NOTES.md section 12) and the model rejects a
-    temperature setting, so pinning it is the only way to make this leg reproducible.
+
+def source_query(ctx: TransferContext, source_discipline: str | None = None) -> str:
+    """Subject matter of the borrowed field first; validity conditions second.
+
+    Precedence for the discipline name is override, then the inferred slot. The
+    extractor supplies the slot only about four runs in five (NOTES.md section 12)
+    and the model rejects a temperature setting, so pinning it is the only way to
+    make this leg reproducible.
+
+    Validity is asked in the field's own terms (regimes, limits, assumptions), not
+    in train-test vocabulary. That vocabulary is the clinical-prediction cluster;
+    leading with it retrieves methodology papers regardless of the discipline prefix.
     """
     discipline = source_discipline or ctx.source_discipline_hint
+    objects = source_objects(ctx)
     if discipline:
-        # Asks for studies that STATE their validity conditions. The looser phrasing
-        # "validity conditions and cohort generalisation" also returned conceptual
-        # guides and interpretability reviews, which have no protocol to audit.
-        return (
-            f"{discipline} prediction models evaluated on an external cohort: stated "
-            "inclusion criteria, train-test split by subject, and measured performance "
-            "change when the model is applied to a different population"
-        )
+        head = f"{discipline}: {objects}" if objects else discipline
+        return f"{head}. {_VALIDITY_IN_FIELD_TERMS}"
     print(
         "WARNING: no source discipline (neither --source-discipline nor an inferred "
-        "source_discipline_hint). The source leg falls back to a methods framing of the "
-        "target slots, which stays inside the target discipline and weakens the audit.",
+        "source_discipline_hint). The source leg falls back to source objects if known, "
+        "otherwise the target slots, and stays topically narrower. The operator should "
+        "pin --source-discipline.",
         file=sys.stderr,
     )
+    if objects:
+        return f"{objects}. {_VALIDITY_IN_FIELD_TERMS}"
     subject = ctx.state_variable or ctx.target_claim
     readout = _clause("from", ctx.readout)
+    system = _clause("in", ctx.target_system)
+    return f"{subject} {system} {readout}. {_VALIDITY_IN_FIELD_TERMS}".replace("  ", " ")
+
+
+def _classify_schema() -> str:
+    return json.dumps(_PaperLabel.model_json_schema(), indent=2)
+
+
+def _classify_query(discipline: str) -> str:
     return (
-        f"machine learning prediction of {subject} {readout}: stated inclusion "
-        "criteria, train-test split, external validation, and data leakage"
-    ).replace("  ", " ")
+        f"The source discipline this search was aimed at is: {discipline}. "
+        "Classify this paper's own subject matter. "
+        "in_discipline: the paper is about this discipline's objects, mechanisms, "
+        "or phenomena. "
+        "generic: the contribution is how to validate, transport, shift-robustify, "
+        "or evaluate a prediction model, and any domain is incidental. "
+        "Judge the paper, not a target application. Domain distance is not the question."
+    )
+
+
+def _warn_source_leg(check: SourceLegCheck, docs: list[SourceDoc]) -> None:
+    labelled = check.in_discipline + check.generic
+    print(
+        f"WARNING: source-leg in-discipline {check.in_discipline}/{labelled} "
+        f"is below half (floor {IN_DISCIPLINE_FLOOR}) for {check.discipline!r}. "
+        "The query landed in a generic methods cluster, not the pinned discipline. "
+        "Break-point tables from this run are not field evidence.",
+        file=sys.stderr,
+    )
+    by_id = {doc.doc_id: doc for doc in docs}
+    for doc_id, label in check.labels.items():
+        if label != "generic":
+            continue
+        title = by_id[doc_id].title if doc_id in by_id else ""
+        print(f"  generic  {doc_id:18} {title[:80]}", file=sys.stderr)
+
+
+def classify_source_leg(
+    docs: list[SourceDoc],
+    search_id: str,
+    discipline: str,
+    *,
+    workdir: Path,
+) -> SourceLegCheck:
+    """Label each source-leg paper in-discipline or generic. Warn below the floor.
+
+    Uses map on the existing search id. Does not call `paperclip filter`: filter
+    rewrites the stored result set in place and would break replay.
+    """
+    empty = SourceLegCheck(
+        discipline=discipline,
+        in_discipline=0,
+        generic=0,
+        unclassified=len(docs),
+        labels={},
+        below_floor=False,
+    )
+    if not docs or not search_id:
+        return empty
+
+    stdout = pc(
+        "map",
+        "--worker",
+        WORKER,
+        "--from",
+        search_id,
+        "--output-schema",
+        _classify_schema(),
+        _classify_query(discipline),
+        timeout=MAP_TIMEOUT,
+    )
+    map_id = parse_map_id(stdout)
+    if not map_id:
+        print(
+            f"WARNING: source-leg discipline check produced no map id for {search_id}.",
+            file=sys.stderr,
+        )
+        return empty
+
+    export = workdir / f"classify-{map_id}.txt"
+    pc("results", map_id, "--save", str(export))
+    if not export.exists():
+        print(
+            f"WARNING: source-leg discipline check wrote nothing for {map_id}.",
+            file=sys.stderr,
+        )
+        return empty
+
+    wanted = {doc.doc_id for doc in docs}
+    labels: dict[str, DisciplineLabel] = {}
+    for doc_id, payload in parse_map_blocks(export.read_text(encoding="utf-8")):
+        if doc_id not in wanted:
+            continue
+        parsed = payload_json(payload)
+        if parsed is None:
+            continue
+        try:
+            labelled = _PaperLabel.model_validate(parsed)
+        except Exception as exc:
+            print(f"source-leg check: invalid label for {doc_id}: {exc}", file=sys.stderr)
+            continue
+        labels[doc_id] = labelled.label
+
+    in_disc = sum(1 for label in labels.values() if label == "in_discipline")
+    generic = sum(1 for label in labels.values() if label == "generic")
+    labelled_n = in_disc + generic
+    below = labelled_n > 0 and (in_disc / labelled_n) < IN_DISCIPLINE_FLOOR
+    check = SourceLegCheck(
+        discipline=discipline,
+        in_discipline=in_disc,
+        generic=generic,
+        unclassified=sum(1 for doc in docs if doc.doc_id not in labels),
+        labels=labels,
+        below_floor=below,
+    )
+    if below:
+        _warn_source_leg(check, docs)
+    elif labelled_n == 0:
+        print(
+            "WARNING: source-leg discipline check produced no labels. "
+            "In-discipline rate is unknown.",
+            file=sys.stderr,
+        )
+    return check
 
 
 def _parse_search_id(stdout: str) -> str | None:
@@ -163,6 +346,8 @@ def retrieve(
 
     per_leg: list[list[SourceDoc]] = []
     search_ids: list[str] = []
+    source_leg_docs: list[SourceDoc] = []
+    source_search_id: str | None = None
     for source_flag, query in legs:
         stdout = pc("search", query, "-s", source_flag, "-n", str(per_search))
         search_id = _parse_search_id(stdout)
@@ -171,18 +356,20 @@ def retrieve(
             per_leg.append([])
             continue
         search_ids.append(search_id)
-        per_leg.append(
-            [
-                SourceDoc(
-                    doc_id=row["id"],
-                    source=row.get("source", "") or source_flag,
-                    title=row.get("title", ""),
-                    search_id=search_id,
-                )
-                for row in _export_rows(search_id, workdir)
-                if row["id"] not in deny
-            ]
-        )
+        docs = [
+            SourceDoc(
+                doc_id=row["id"],
+                source=row.get("source", "") or source_flag,
+                title=row.get("title", ""),
+                search_id=search_id,
+            )
+            for row in _export_rows(search_id, workdir)
+            if row["id"] not in deny
+        ]
+        per_leg.append(docs)
+        if source_flag == "arxiv":
+            source_leg_docs = docs
+            source_search_id = search_id
 
     # Round-robin so that hitting the cap cannot silently drop a whole discipline.
     documents: list[SourceDoc] = []
@@ -199,11 +386,24 @@ def retrieve(
             "The context slots may be too narrow to match anything."
         )
 
+    discipline = source_discipline or ctx.source_discipline_hint
+    check: SourceLegCheck | None = None
+    if discipline and source_search_id and source_leg_docs:
+        check = classify_source_leg(
+            source_leg_docs, source_search_id, discipline, workdir=workdir
+        )
+        labelled = check.labels
+        documents = [
+            doc.model_copy(update={"discipline_label": labelled.get(doc.doc_id)})
+            for doc in documents
+        ]
+
     result = Retrieval(
         doc_ids=[doc.doc_id for doc in documents],
         search_ids=search_ids,
         documents=documents,
         queries={source_flag: query for source_flag, query in legs},
+        source_leg_check=check,
     )
     if len(result.sources) < 2:
         print(

@@ -145,6 +145,23 @@ def test_offline_target_claim_is_the_text_verbatim():
     assert ctx.target_claim == " ".join(FIXTURE.read_text().split())
 
 
+def test_offline_source_result_is_the_source_half():
+    ctx = build_context_from_file(FIXTURE, offline=True)
+    assert ctx.source_result is not None
+    assert "resting-state fMRI" in ctx.source_result
+    assert "sepsis" not in ctx.source_result
+
+
+def test_live_stub_fills_source_result_from_the_original_text():
+    ctx = build_context(
+        "Kuramoto coupling of oscillators predicts synchrony, so the same "
+        "coupling should predict flowering in a meadow from temperature.",
+        client=FakeClient(VALID_REPLY),
+    )
+    assert "Kuramoto" in (ctx.source_result or "")
+    assert ctx.target_system == "ICU patients"
+
+
 def test_offline_unstated_slots_are_none_not_guesses():
     ctx = build_context_from_file(FIXTURE, offline=True)
     assert ctx.perturbation is None
